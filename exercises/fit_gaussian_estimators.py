@@ -80,7 +80,7 @@ def test_multivariate_gaussian():
 
     # samples parameters:
     n_samples = 1000
-    mu = np.array([0, 0, 4, 0])
+    mu = np.array([0, 0, 4, 0]).T
     sigma = np.array([[1, 0.2, 0, 0.5],
                       [0.2, 2, 0, 0],
                       [0, 0, 1, 0],
@@ -101,21 +101,10 @@ def test_multivariate_gaussian():
     # ----------------------------------------------------------------------
 
     # parameters:
-    # space = np.linspace(-10, 10, 200)
-    size = 200
-    space = np.linspace(-10, 10, size)
+    space = np.linspace(-10, 10, 200)
     f3, f1 = np.meshgrid(space, space, sparse=True)
-    # res = np.zeros((len(space), len(space)))
-    # res = np.zeros((size, size))
 
-    # # calculate likelihood:
-    # for i, f1 in enumerate(space):
-    #     print(i)
-    #     for j, f3 in enumerate(space):
-    #         print(j)
-    #         res[i, j] = multivariate_estimator.log_likelihood(
-    #                     np.array([f1, 0, f3, 0]).T, sigma, samples)
-
+    # calculate likelihood:
     res = np.vectorize(lambda x, y: multivariate_estimator.log_likelihood(
         np.array([x, 0, y, 0]).T, sigma, samples))(f1, f3)
 
