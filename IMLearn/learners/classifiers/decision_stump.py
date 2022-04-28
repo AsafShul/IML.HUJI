@@ -1,8 +1,13 @@
 from __future__ import annotations
 from typing import NoReturn
+
 from ...base import BaseEstimator
 import numpy as np
 from itertools import product
+
+# todo remove?
+from IMLearn.metrics.loss_functions import misclassification_error
+import pandas as pd
 
 
 class DecisionStump(BaseEstimator):
@@ -39,7 +44,18 @@ class DecisionStump(BaseEstimator):
         y : ndarray of shape (n_samples, )
             Responses of input data to fit to
         """
-        raise NotImplementedError()
+        # initialize loop parameters:
+        min_error = np.inf
+        signs = np.unique(y)  # todo make sure
+
+        # loop over all features and all possible thresholds:
+        for sign, feature in product(signs, range(X.shape[1])):
+            thresh, error = self._find_threshold(X[:, feature], y, sign)
+            if error < min_error:
+                min_error = error
+                self.threshold_, self.j_, self.sign_ = thresh, feature, sign
+
+        self.fitted_ = True
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -63,9 +79,10 @@ class DecisionStump(BaseEstimator):
         Feature values strictly below threshold are predicted as `-sign` whereas values which equal
         to or above the threshold are predicted as `sign`
         """
-        raise NotImplementedError()
 
-    def _find_threshold(self, values: np.ndarray, labels: np.ndarray, sign: int) -> float:
+        return np.where(X[:, self.j_] < self.threshold_, -self.sign_, self.sign_)
+
+    def _find_threshold(self, values: np.ndarray, labels: np.ndarray, sign: int) -> float: # todo mistake?
         """
         Given a feature vector and labels, find a threshold by which to perform a split
         The threshold is found according to the value minimizing the misclassification
@@ -95,7 +112,12 @@ class DecisionStump(BaseEstimator):
         For every tested threshold, values strictly below threshold are predicted as `-sign` whereas values
         which equal to or above the threshold are predicted as `sign`
         """
-        raise NotImplementedError()
+
+        df = pd.DataFrame(data={'values': values, 'labels': labels, 'errors': np.nan})
+        df.errors = df.apply(lambda row: misclassification_error(
+            df.labels, np.where(values > row.values, sign, -sign)), axis=1)
+
+        return df.values[df.errors.idxmin()], df.errors.min() # todo check return values
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """
@@ -114,4 +136,5 @@ class DecisionStump(BaseEstimator):
         loss : float
             Performance under missclassification loss function
         """
-        raise NotImplementedError()
+
+        return misclassification_error(y, self.predict(X))
