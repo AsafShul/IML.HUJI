@@ -9,6 +9,7 @@ from IMLearn.learners.classifiers import DecisionStump
 from utils import *
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+from IMLearn.metrics.loss_functions import accuracy
 
 
 def generate_data(n: int, noise_ratio: float) -> Tuple[np.ndarray, np.ndarray]:
@@ -73,40 +74,82 @@ def fit_and_evaluate_adaboost(noise, n_learners=250, train_size=5000,
 
     colors_dict = {-1: 'lightsalmon', 1: 'cornflowerblue'}
     symbols_dict = {-1: 'circle', 1: 'diamond'}
-    true_symbols = [symbols_dict[f] for f in test_y]
-    true_colors = [colors_dict[f] for f in test_y]
+    true_test_symbols = [symbols_dict[f] for f in test_y]
+    true_test_colors = [colors_dict[f] for f in test_y]
+    true_train_colors = [colors_dict[f] for f in train_y]
 
-    # partial_pred_df = pd.DataFrame({f'pred_{t}':
-    #                                        adaboost.partial_predict(test_X, t)
-    #                                    for t in T})
     q2_figures = []
     for t in T:
-    # for t in [5, 10, 20, 30, 40, 50]:
-    # for t in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20]:
         q2_figures.append(go.Figure())
         q2_figures[-1].add_trace(go.Scatter(x=test_X[:, 0], y=test_X[:, 1],
                                   mode='markers',
-                                  marker=dict(color=true_colors,
-                                              symbol=true_symbols)
+                                  marker=dict(color=true_test_colors,
+                                              symbol=true_test_symbols)
                                   ))
+
         q2_figures[-1].add_trace(decision_surface(
             lambda x: adaboost.partial_predict(x, t),
             lims[0], lims[1],
             showscale=False))
 
+        q2_figures[-1].update_layout(
+            title_text=f'Decision boundary for size ({t})', title_x=0.5,
+            yaxis_range=[-1, 1], xaxis_range=[-1, 1])
+
         q2_figures[-1].show()
 
-    raise NotImplementedError()
-
     # Question 3: Decision surface of best performing ensemble
-    raise NotImplementedError()
+
+    # calc plot params:
+    errors = [adaboost.partial_loss(test_X, test_y, t) for t in iterations]
+    min_err_size = np.argmin(errors)
+    min_err_acc = accuracy(test_y, adaboost.partial_predict(test_X, min_err_size))
+
+    # plot fig:
+    q3_fig = go.Figure()
+    q3_fig.add_trace(go.Scatter(x=test_X[:, 0], y=test_X[:, 1],
+                                  mode='markers',
+                                  marker=dict(color=true_test_colors,
+                                              symbol=true_test_symbols)
+                                  ))
+    q3_fig.add_trace(decision_surface(
+        lambda x: adaboost.partial_predict(x, min_err_size),
+        lims[0], lims[1],
+        showscale=False))
+
+    q3_fig.update_layout(
+        title_text=f'Decision boundary for Lowest error'
+                   f'[size := {min_err_size}, accuracy := {min_err_acc}]',
+        title_x=0.5, yaxis_range=[-1, 1], xaxis_range=[-1, 1])
+
+    q3_fig.show()
 
     # Question 4: Decision surface with weighted samples
-    raise NotImplementedError()
+    weights = adaboost.D_   # todo d as array of vectors?
+    weights = (weights / np.max(weights)) * 40 # todo needs to be 5...
 
+    # plot fig:
+    q4_fig = go.Figure()
+    q4_fig.add_trace(go.Scatter(x=train_X[:, 0], y=train_X[:, 1],
+                                mode='markers',
+                                marker=dict(color=true_train_colors,
+                                            size=weights,
+                                            line=dict(width=2,
+                                                      color='DarkSlateGrey')
+                                            )
+                                ))
+    q4_fig.add_trace(decision_surface(
+        lambda x: adaboost.predict(x),
+        lims[0], lims[1],
+        showscale=False))
+
+    q4_fig.update_layout(
+        title_text=f'Importance of points in train for classification:',
+        title_x=0.5, yaxis_range=[-1, 1], xaxis_range=[-1, 1])
+
+    q4_fig.show()
 
 if __name__ == '__main__':
     np.random.seed(0)
-    fit_and_evaluate_adaboost(0, 30)  # todo fix
-
-    raise NotImplementedError()
+    fit_and_evaluate_adaboost(0)
+    fit_and_evaluate_adaboost(0.4)
