@@ -25,6 +25,7 @@ class DecisionStump(BaseEstimator):
     self.sign_: int
         The label to predict for samples where the value of the j'th feature is about the threshold
     """
+
     def __init__(self) -> DecisionStump:
         """
         Instantiate a Decision stump classifier
@@ -45,17 +46,29 @@ class DecisionStump(BaseEstimator):
             Responses of input data to fit to
         """
         # initialize loop parameters:
-        min_error = np.inf
+        # min_error = np.inf
         signs = np.unique(y)  # todo make sure
 
-        # loop over all features and all possible thresholds:
-        for sign, feature in product(signs, range(X.shape[1])):
-            thresh, error = self._find_threshold(X[:, feature], y, sign)
-            if error < min_error:
-                min_error = error
-                self.threshold_, self.j_, self.sign_ = thresh, feature, sign
+        cols = ['sign', 'j', 'thresh', 'error']
+        res = pd.DataFrame(columns=cols)
+        res[['sign', 'j']] = list(product(signs, range(X.shape[1])))
+        res['thresh'], res['error'] = \
+            zip(*(res.apply(
+                lambda row: self._find_threshold
+                (X[:, int(row[1])], y, row[0]), axis=1)))
 
+        self.threshold_, self.j_, self.sign_ = res.loc[res['error'].idxmin(),
+                                                       ['thresh', 'j', 'sign']]
         self.fitted_ = True
+
+        # # loop over all features and all possible thresholds:
+        # for sign, feature in product(signs, range(X.shape[1])):
+        #     thresh, error = self._find_threshold(X[:, feature], y, sign)
+        #     if error < min_error:
+        #         min_error = error
+        #         self.threshold_, self.j_, self.sign_ = thresh, feature, sign
+        #
+        # self.fitted_ = True
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -80,9 +93,11 @@ class DecisionStump(BaseEstimator):
         to or above the threshold are predicted as `sign`
         """
 
-        return np.where(X[:, self.j_] < self.threshold_, -self.sign_, self.sign_)
+        return np.where(X[:, int(self.j_)] < self.threshold_, -self.sign_,
+                        self.sign_)
 
-    def _find_threshold(self, values: np.ndarray, labels: np.ndarray, sign: int) -> float: # todo mistake?
+    def _find_threshold(self, values: np.ndarray, labels: np.ndarray,
+                        sign: int) -> float:  # todo mistake?
         """
         Given a feature vector and labels, find a threshold by which to perform a split
         The threshold is found according to the value minimizing the misclassification
@@ -113,11 +128,22 @@ class DecisionStump(BaseEstimator):
         which equal to or above the threshold are predicted as `sign`
         """
 
-        df = pd.DataFrame(data={'values': values, 'labels': labels, 'errors': np.nan})
-        df.errors = df.apply(lambda row: misclassification_error(
-            df.labels, np.where(values > row.values, sign, -sign)), axis=1)
+        thresholds = pd.Series(sorted(values)).rolling(2).mean().dropna() # todo check, need gini?
+        err = thresholds.apply(lambda t: misclassification_error(
+                             labels, np.where(values < t, -sign, sign)))
 
-        return df.values[df.errors.idxmin()], df.errors.min() # todo check return values
+        return thresholds[err.idxmin()], err.min()
+
+        # df = pd.DataFrame(data={'values': values,
+        #                         'labels': labels,
+        #                         'errors': np.nan})
+        #
+        # df.errors = df['values'].apply(
+        #     lambda row: misclassification_error(
+        #         df.labels, np.where(values > row, sign, -sign)))
+        #
+        # return df['values'][df.errors.idxmin()], df.errors.min()
+        # todo check return values
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """
