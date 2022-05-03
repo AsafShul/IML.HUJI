@@ -1,6 +1,10 @@
 import numpy as np
 from typing import Tuple
-from IMLearn.learners.metalearners.adaboost import AdaBoost
+
+import pandas as pd
+
+from IMLearn.metalearners.adaboost import AdaBoost
+# from IMLearn.learners.metalearners.adaboost import AdaBoost # todo make sure
 from IMLearn.learners.classifiers import DecisionStump
 from utils import *
 import plotly.graph_objects as go
@@ -38,15 +42,60 @@ def generate_data(n: int, noise_ratio: float) -> Tuple[np.ndarray, np.ndarray]:
     return X, y
 
 
-def fit_and_evaluate_adaboost(noise, n_learners=250, train_size=5000, test_size=500):
-    (train_X, train_y), (test_X, test_y) = generate_data(train_size, noise), generate_data(test_size, noise)
+def fit_and_evaluate_adaboost(noise, n_learners=250, train_size=5000,
+                              test_size=500):
+    (train_X, train_y), (test_X, test_y) = generate_data(train_size,
+                                                         noise), generate_data(
+        test_size, noise)
 
     # Question 1: Train- and test errors of AdaBoost in noiseless case
-    raise NotImplementedError()
+    adaboost = AdaBoost(DecisionStump, n_learners)
+    adaboost.fit(train_X, train_y)
+
+    iterations = list(range(1, n_learners + 1))
+    error_df = pd.DataFrame({'iteration': iterations,
+                             'train': [
+                                 adaboost.partial_loss(train_X, train_y, i) for
+                                 i in iterations],
+                             'test': [adaboost.partial_loss(test_X, test_y, i)
+                                      for i in iterations]})
+
+    fig1 = px.line(error_df, x='iteration', y=['train', 'test'],
+                   title='Train, Test errors of AdaBoost in noiseless case by iteration')
+    fig1.update_layout(title_x=0.5)
+    fig1.show()
 
     # Question 2: Plotting decision surfaces
     T = [5, 50, 100, 250]
-    lims = np.array([np.r_[train_X, test_X].min(axis=0), np.r_[train_X, test_X].max(axis=0)]).T + np.array([-.1, .1])
+    lims = np.array([np.r_[train_X, test_X].min(axis=0),
+                     np.r_[train_X, test_X].max(axis=0)]).T + np.array(
+        [-.1, .1])
+
+    colors_dict = {-1: 'lightsalmon', 1: 'cornflowerblue'}
+    symbols_dict = {-1: 'circle', 1: 'diamond'}
+    true_symbols = [symbols_dict[f] for f in test_y]
+    true_colors = [colors_dict[f] for f in test_y]
+
+    # partial_pred_df = pd.DataFrame({f'pred_{t}':
+    #                                        adaboost.partial_predict(test_X, t)
+    #                                    for t in T})
+    q2_figures = []
+    for t in T:
+    # for t in [5, 10, 20, 30, 40, 50]:
+    # for t in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20]:
+        q2_figures.append(go.Figure())
+        q2_figures[-1].add_trace(go.Scatter(x=test_X[:, 0], y=test_X[:, 1],
+                                  mode='markers',
+                                  marker=dict(color=true_colors,
+                                              symbol=true_symbols)
+                                  ))
+        q2_figures[-1].add_trace(decision_surface(
+            lambda x: adaboost.partial_predict(x, t),
+            lims[0], lims[1],
+            showscale=False))
+
+        q2_figures[-1].show()
+
     raise NotImplementedError()
 
     # Question 3: Decision surface of best performing ensemble
@@ -58,4 +107,6 @@ def fit_and_evaluate_adaboost(noise, n_learners=250, train_size=5000, test_size=
 
 if __name__ == '__main__':
     np.random.seed(0)
+    fit_and_evaluate_adaboost(0, 30)  # todo fix
+
     raise NotImplementedError()
