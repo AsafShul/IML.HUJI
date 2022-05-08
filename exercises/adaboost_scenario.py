@@ -4,7 +4,7 @@ from typing import Tuple
 import pandas as pd
 
 from IMLearn.metalearners.adaboost import AdaBoost
-# from IMLearn.learners.metalearners.adaboost import AdaBoost # todo make sure
+# from IMLearn.learners.metalearners.adaboost import AdaBoost
 from IMLearn.learners.classifiers import DecisionStump
 from utils import *
 import plotly.graph_objects as go
@@ -125,8 +125,10 @@ def fit_and_evaluate_adaboost(noise, n_learners=250, train_size=5000,
     q3_fig.show()
 
     # Question 4: Decision surface with weighted samples
-    weights = adaboost.D_   # todo d as array of vectors?
-    weights = (weights / np.max(weights)) * 40 # todo needs to be 5...
+    weights = adaboost.D_
+
+    # I changed the formula for better visualization
+    sizeref = 2 * max(weights) / (50**2)
 
     # plot fig:
     q4_fig = go.Figure()
@@ -134,6 +136,9 @@ def fit_and_evaluate_adaboost(noise, n_learners=250, train_size=5000,
                                 mode='markers',
                                 marker=dict(color=true_train_colors,
                                             size=weights,
+                                            sizemode='area',
+                                            sizeref=sizeref,
+                                            sizemin=0.5,
                                             line=dict(width=2,
                                                       color='DarkSlateGrey')
                                             )
