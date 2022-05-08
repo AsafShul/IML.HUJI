@@ -1,6 +1,5 @@
 import numpy as np
-# from ...base import BaseEstimator # todo check why not working?
-from IMLearn.base import BaseEstimator
+from ..base import BaseEstimator
 from IMLearn.metrics.loss_functions import misclassification_error
 from typing import Callable, NoReturn
 
@@ -103,7 +102,7 @@ class AdaBoost(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        return self.partial_predict(X, self.iterations_)  # todo make sure -1 or not
+        return self.partial_predict(X, self.iterations_)
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """
@@ -122,7 +121,7 @@ class AdaBoost(BaseEstimator):
         loss : float
             Performance under missclassification loss function
         """
-        self.partial_loss(X, y, self.iterations_)  # todo make sure -1 or not
+        self.partial_loss(X, y, self.iterations_)
 
     def partial_predict(self, X: np.ndarray, T: int) -> np.ndarray:
         """
