@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import NoReturn
 
+
 from typing import Tuple, NoReturn
 from ...base import BaseEstimator
 import numpy as np

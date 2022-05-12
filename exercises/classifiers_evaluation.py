@@ -42,6 +42,7 @@ def run_perceptron():
     """
     for n, f in [("Linearly Separable", "linearly_separable.npy"),
                  ("Linearly Inseparable", "linearly_inseparable.npy")]:
+        # Plot figure of loss as function of fitting iteration
         # Load dataset
         samples, labels = load_dataset(path.join('../datasets', f))
         losses = []
