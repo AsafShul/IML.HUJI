@@ -25,8 +25,11 @@ def select_polynomial_degree(n_samples: int = 100, noise: float = 5):
     noise: float, default = 5
         Noise level to simulate in responses
     """
-    # Question 1 - Generate dataset for model f(x)=(x+3)(x+2)(x+1)(x-1)(x-2) + eps for eps Gaussian noise
+    # Question 1 - Generate dataset for model
+    # f(x)=(x+3)(x+2)(x+1)(x-1)(x-2) +
+    # eps for eps Gaussian noise
     # and split into training- and testing portions
+
     raise NotImplementedError()
 
     # Question 2 - Perform CV for polynomial fitting with degrees 0,1,...,10
