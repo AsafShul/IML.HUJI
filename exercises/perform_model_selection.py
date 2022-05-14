@@ -29,23 +29,26 @@ def select_polynomial_degree(n_samples: int = 100, noise: float = 5):
     # f(x)=(x+3)(x+2)(x+1)(x-1)(x-2) +
     # eps for eps Gaussian noise
     # and split into training- and testing portions
-
     X = np.linspace(-2.5, 2.5, n_samples)
     y = (X + 3) * (X + 2) * (X + 1) * (X - 1) * (X - 2)
     y_with_noise = y + np.random.normal(0, noise, y.shape)
     X_train, y_train, X_test, y_test = split_train_test(X, y_with_noise)
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=X, y=y, mode='lines', name='True data',
+    fig.add_trace(go.Scatter(x=X, y=y, mode='lines',
+                             name='True Polynomial Function',
                              line=dict(color='black')))
+    fig.add_trace(go.Scatter(x=X_train.values.reshape(1, -1)[0],
+                             y=y_train.values, mode='markers',
+                             name='Training data', marker=dict(
+            color='lightsalmon', symbol='circle')))
 
-    fig.add_trace(go.Scatter(x=np.array(X_train), y=np.array(y_train), mode='markers',
-                             name='Training data'))
-    fig.add_trace(go.Scatter(x=np.array(X_test), y=np.array(y_test), mode='markers',
-                             name='Testing data'))
+    fig.add_trace(go.Scatter(x=X_test.values.reshape(1, -1)[0],
+                             y=y_test.values, mode='markers',
+                             name='Testing data', marker=dict(
+            color='cornflowerblue', symbol='diamond')))
 
     fig.update_layout(title='Training and testing data', title_x=0.5)
     fig.show()
-    print('a')
 
 
 
