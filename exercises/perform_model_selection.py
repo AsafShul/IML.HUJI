@@ -30,6 +30,25 @@ def select_polynomial_degree(n_samples: int = 100, noise: float = 5):
     # eps for eps Gaussian noise
     # and split into training- and testing portions
 
+    X = np.linspace(-2.5, 2.5, n_samples)
+    y = (X + 3) * (X + 2) * (X + 1) * (X - 1) * (X - 2)
+    y_with_noise = y + np.random.normal(0, noise, y.shape)
+    X_train, y_train, X_test, y_test = split_train_test(X, y_with_noise)
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=X, y=y, mode='lines', name='True data',
+                             line=dict(color='black')))
+
+    fig.add_trace(go.Scatter(x=np.array(X_train), y=np.array(y_train), mode='markers',
+                             name='Training data'))
+    fig.add_trace(go.Scatter(x=np.array(X_test), y=np.array(y_test), mode='markers',
+                             name='Testing data'))
+
+    fig.update_layout(title='Training and testing data', title_x=0.5)
+    fig.show()
+    print('a')
+
+
+
     raise NotImplementedError()
 
     # Question 2 - Perform CV for polynomial fitting with degrees 0,1,...,10
@@ -64,4 +83,5 @@ def select_regularization_parameter(n_samples: int = 50, n_evaluations: int = 50
 
 if __name__ == '__main__':
     np.random.seed(0)
+    select_polynomial_degree()
     raise NotImplementedError()
