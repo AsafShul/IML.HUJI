@@ -33,17 +33,21 @@ def select_polynomial_degree(n_samples: int = 100, noise: float = 5):
     y = (X + 3) * (X + 2) * (X + 1) * (X - 1) * (X - 2)
     y_with_noise = y + np.random.normal(0, noise, y.shape)
     X_train, y_train, X_test, y_test = split_train_test(X, y_with_noise)
+
+    X_train = X_train.values.reshape(1, -1)
+    y_train = y_train.values.reshape(1, -1)
+    X_test = X_test.values.reshape(1, -1)
+    y_test = y_test.values.reshape(1, -1)
+
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=X, y=y, mode='lines',
                              name='True Polynomial Function',
                              line=dict(color='black')))
-    fig.add_trace(go.Scatter(x=X_train.values.reshape(1, -1)[0],
-                             y=y_train.values, mode='markers',
+    fig.add_trace(go.Scatter(x=X_train[0], y=y_train[0], mode='markers',
                              name='Training data', marker=dict(
             color='lightsalmon', symbol='circle')))
 
-    fig.add_trace(go.Scatter(x=X_test.values.reshape(1, -1)[0],
-                             y=y_test.values, mode='markers',
+    fig.add_trace(go.Scatter(x=X_test[0], y=y_test[0], mode='markers',
                              name='Testing data', marker=dict(
             color='cornflowerblue', symbol='diamond')))
 
@@ -51,11 +55,27 @@ def select_polynomial_degree(n_samples: int = 100, noise: float = 5):
     fig.show()
 
 
-
-    raise NotImplementedError()
-
     # Question 2 - Perform CV for polynomial fitting with degrees 0,1,...,10
+    degree = pd.Series(np.arange(0, 11))
+    res = degree.apply(lambda k: cross_validate(
+        PolynomialFitting(k), X_train, y_train,
+        scoring=mean_square_error, cv=5))
+
+    train_score = res.apply(lambda r: r[0])
+    validation_score = res.apply(lambda r: r[1])
+
+    fig2 = go.Figure()
+    fig2.add_trace(go.Scatter(x=degree, y=train_score, mode='lines',
+                              name='Training error'))
+    fig2.add_trace(go.Scatter(x=degree, y=validation_score, mode='lines',
+                              name='Validation error'))
+    fig2.update_layout(title='Cross-validation for polynomial fitting',
+                       title_x=0.5)
+    fig2.show()
+
+
     raise NotImplementedError()
+
 
     # Question 3 - Using best value of k, fit a k-degree polynomial model and report test error
     raise NotImplementedError()
