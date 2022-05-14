@@ -52,7 +52,7 @@ def select_polynomial_degree(n_samples: int = 100, noise: float = 5):
             color='cornflowerblue', symbol='diamond')))
 
     fig.update_layout(title='Training and testing data', title_x=0.5)
-    fig.show()
+    # fig.show()
 
 
     # Question 2 - Perform CV for polynomial fitting with degrees 0,1,...,10
@@ -71,14 +71,17 @@ def select_polynomial_degree(n_samples: int = 100, noise: float = 5):
                               name='Validation error'))
     fig2.update_layout(title='Cross-validation for polynomial fitting',
                        title_x=0.5)
-    fig2.show()
+    # fig2.show()
 
+    # Question 3 - Using best value of k,
+    # fit a k-degree polynomial model and report test error
 
-    raise NotImplementedError()
-
-
-    # Question 3 - Using best value of k, fit a k-degree polynomial model and report test error
-    raise NotImplementedError()
+    k = int(validation_score.idxmin())
+    print('Best k:', k)
+    model = PolynomialFitting(k)
+    model.fit(X_train, y_train.transpose())
+    loss = model.loss(X_test, y_test.transpose())
+    print(f'Test error: {round(loss, 2)}')
 
 
 def select_regularization_parameter(n_samples: int = 50, n_evaluations: int = 500):
