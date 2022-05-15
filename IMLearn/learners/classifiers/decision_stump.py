@@ -1,7 +1,6 @@
 from __future__ import annotations
 from typing import NoReturn
 
-
 from typing import Tuple, NoReturn
 from ...base import BaseEstimator
 import numpy as np
@@ -33,6 +32,7 @@ class DecisionStump(BaseEstimator):
         """
         super().__init__()
         self.threshold_, self.j_, self.sign_ = None, None, None
+        self.labels_ = np.array([-1, 1])
 
     def _fit(self, X: np.ndarray, y: np.ndarray) -> NoReturn:
         """
@@ -46,21 +46,14 @@ class DecisionStump(BaseEstimator):
         y : ndarray of shape (n_samples, )
             Responses of input data to fit to
         """
-        # initialize loop parameters:
-        signs = np.unique(y)
 
-        cols = ['sign', 'j', 'thresh', 'error']
-        res = pd.DataFrame(columns=cols)
-        res[['sign', 'j']] = list(product(signs, range(X.shape[1])))
-        res['thresh'], res['error'] = \
-            zip(*(res.apply(
-                lambda row: self._find_threshold
-                (X[:, int(row[1])], y, row[0]), axis=1)))
-
-        self.threshold_, self.j_, self.sign_ = res.loc[res['error'].idxmin(),
-                                                       ['thresh', 'j', 'sign']]
-        self.fitted_ = True
-
+        min_error = np.inf
+        combinations = product(self.labels_, range(X.shape[1]))
+        for label, size in combinations:
+            threshold, error = self._find_threshold(X[:, size], y, label)
+            min_error, self.threshold_, self.j_, self.sign_ = \
+                (error, threshold, size, label) if error < min_error else \
+                    (min_error, self.threshold_, self.j_, self.sign_)
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -88,7 +81,8 @@ class DecisionStump(BaseEstimator):
         return np.where(X[:, int(self.j_)] < self.threshold_, -self.sign_,
                         self.sign_)
 
-    def _find_threshold(self, values: np.ndarray, labels: np.ndarray, sign: int) -> Tuple[float, float]:
+    def _find_threshold(self, values: np.ndarray, labels: np.ndarray,
+                        sign: int) -> Tuple[float, float]:
         """
         Given a feature vector and labels, find a threshold by which to perform a split
         The threshold is found according to the value minimizing the misclassification
@@ -119,12 +113,18 @@ class DecisionStump(BaseEstimator):
         which equal to or above the threshold are predicted as `sign`
         """
 
-        thresholds = pd.Series(sorted(values)).rolling(2).mean().dropna()
-        err = thresholds.apply(lambda t: misclassification_error(
-                             labels, np.where(values < t, -sign, sign)))
+        data = sorted(zip(values, labels), key=lambda tup: tup[0])
 
-        return thresholds[err.idxmin()], err.min()
+        values = np.array([x[0] for x in data])
+        labels = np.array([x[1] for x in data])
 
+        threshold = np.concatenate(
+            [[-np.inf], list(pd.Series(values).rolling(2).mean().dropna()),
+             [np.inf]])
+        loss = np.sum(np.abs(labels[np.sign(labels) == sign]))
+        error = np.append(loss, loss - np.cumsum(labels * sign))
+        index = np.argmin(error)
+        return threshold[index], error[index]
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """

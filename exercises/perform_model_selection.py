@@ -29,7 +29,7 @@ def select_polynomial_degree(n_samples: int = 100, noise: float = 5):
     # f(x)=(x+3)(x+2)(x+1)(x-1)(x-2) +
     # eps for eps Gaussian noise
     # and split into training- and testing portions
-    X = np.linspace(-2.5, 2.5, n_samples)
+    X = np.linspace(-1.2, 2, n_samples)
     y = (X + 3) * (X + 2) * (X + 1) * (X - 1) * (X - 2)
     y_with_noise = y + np.random.normal(0, noise, y.shape)
     X_train, y_train, X_test, y_test = split_train_test(X, y_with_noise)
@@ -52,7 +52,7 @@ def select_polynomial_degree(n_samples: int = 100, noise: float = 5):
             color='cornflowerblue', symbol='diamond')))
 
     fig.update_layout(title='Training and testing data', title_x=0.5)
-    # fig.show()
+    fig.show()
 
 
     # Question 2 - Perform CV for polynomial fitting with degrees 0,1,...,10
@@ -71,7 +71,7 @@ def select_polynomial_degree(n_samples: int = 100, noise: float = 5):
                               name='Validation error'))
     fig2.update_layout(title='Cross-validation for polynomial fitting',
                        title_x=0.5)
-    # fig2.show()
+    fig2.show()
 
     # Question 3 - Using best value of k,
     # fit a k-degree polynomial model and report test error
@@ -98,10 +98,51 @@ def select_regularization_parameter(n_samples: int = 50, n_evaluations: int = 50
         Number of regularization parameter values to evaluate for each of the algorithms
     """
     # Question 6 - Load diabetes dataset and split into training and testing portions
-    raise NotImplementedError()
+    diabetes = datasets.load_diabetes()
+    train = diabetes.data[:n_samples]
+    test = diabetes.data[n_samples:]
+    X_train = train[:, :-1]
+    y_train = train[:, -1]
+    X_test = test[:, :-1]
+    y_test = test[:, -1]
+
 
     # Question 7 - Perform CV for different values of the regularization parameter for Ridge and Lasso regressions
-    raise NotImplementedError()
+    folds = 5
+    lam_vals = pd.Series(np.linspace(0, 10, n_evaluations))
+    res_lasso = lam_vals.apply(lambda lam: cross_validate(
+        Lasso(alpha=lam), X_train, y_train,
+        scoring=mean_square_error, cv=folds))
+
+    res_ridge = lam_vals.apply(lambda lam: cross_validate(
+        RidgeRegression(lam=lam), X_train, y_train,
+        scoring=mean_square_error, cv=folds))
+
+    print(lam_vals)
+    print('------------------')
+    print(res_lasso)
+    print('------------------')
+    print(res_ridge)
+    train_score_lasso = res_lasso.apply(lambda r: r[0])
+    validation_score_lasso = res_lasso.apply(lambda r: r[1])
+
+    train_score_ridge = res_ridge.apply(lambda r: r[0])
+    validation_score_ridge = res_ridge.apply(lambda r: r[1])
+
+    fig3 = go.Figure()
+    fig3.add_trace(go.Scatter(x=lam_vals, y=train_score_lasso, mode='lines',
+                              name='Training error - Lasso'))
+    fig3.add_trace(go.Scatter(x=lam_vals, y=validation_score_lasso, mode='lines',
+                              name='Validation error - Lasso'))
+    fig3.add_trace(go.Scatter(x=lam_vals, y=train_score_ridge, mode='lines',
+                              name='Training error - Ridge'))
+    fig3.add_trace(go.Scatter(x=lam_vals, y=validation_score_ridge, mode='lines',
+                              name='Validation error - Ridge'))
+    fig3.update_layout(title='Cross-validation for regularization parameter selection',
+                       title_x=0.5)
+    fig3.show()
+
+
 
     # Question 8 - Compare best Ridge model, best Lasso model and Least Squares model
     raise NotImplementedError()
@@ -109,5 +150,8 @@ def select_regularization_parameter(n_samples: int = 50, n_evaluations: int = 50
 
 if __name__ == '__main__':
     np.random.seed(0)
-    select_polynomial_degree()
+    # select_polynomial_degree()
+    # select_polynomial_degree(noise=0)
+    # select_polynomial_degree(noise=10, n_samples=1500)
+    select_regularization_parameter()
     raise NotImplementedError()

@@ -119,7 +119,7 @@ def fit_and_evaluate_adaboost(noise, n_learners=250, train_size=5000,
 
     q3_fig.update_layout(
         title_text=f'Decision boundary for Lowest error'
-                   f'[size := {min_err_size}, accuracy := {min_err_acc}]',
+                   f'[size := {min_err_size + 1}, accuracy := {min_err_acc}]',
         title_x=0.5, yaxis_range=[-1, 1], xaxis_range=[-1, 1])
 
     q3_fig.show()
@@ -128,7 +128,8 @@ def fit_and_evaluate_adaboost(noise, n_learners=250, train_size=5000,
     weights = adaboost.D_
 
     # I changed the formula for better visualization
-    sizeref = 2 * max(weights) / (50**2)
+    factor = 50**2 if not noise else 100
+    sizeref = 2 * max(weights) / factor
 
     # plot fig:
     q4_fig = go.Figure()
