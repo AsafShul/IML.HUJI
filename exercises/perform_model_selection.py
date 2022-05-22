@@ -109,7 +109,7 @@ def select_regularization_parameter(n_samples: int = 50, n_evaluations: int = 50
 
     # Question 7 - Perform CV for different values of the regularization parameter for Ridge and Lasso regressions
     folds = 5
-    lam_vals = pd.Series(np.linspace(0, 10, n_evaluations))
+    lam_vals = pd.Series(np.linspace(0, 4, n_evaluations))
     res_lasso = lam_vals.apply(lambda lam: cross_validate(
         Lasso(alpha=lam), X_train, y_train,
         scoring=mean_square_error, cv=folds))
@@ -129,18 +129,22 @@ def select_regularization_parameter(n_samples: int = 50, n_evaluations: int = 50
     train_score_ridge = res_ridge.apply(lambda r: r[0])
     validation_score_ridge = res_ridge.apply(lambda r: r[1])
 
-    fig3 = go.Figure()
-    fig3.add_trace(go.Scatter(x=lam_vals, y=train_score_lasso, mode='lines',
+    fig3_lasso = go.Figure()
+    fig3_ridge = go.Figure()
+    fig3_lasso.add_trace(go.Scatter(x=lam_vals, y=train_score_lasso, mode='lines',
                               name='Training error - Lasso'))
-    fig3.add_trace(go.Scatter(x=lam_vals, y=validation_score_lasso, mode='lines',
+    fig3_lasso.add_trace(go.Scatter(x=lam_vals, y=validation_score_lasso, mode='lines',
                               name='Validation error - Lasso'))
-    fig3.add_trace(go.Scatter(x=lam_vals, y=train_score_ridge, mode='lines',
+    fig3_ridge.add_trace(go.Scatter(x=lam_vals, y=train_score_ridge, mode='lines',
                               name='Training error - Ridge'))
-    fig3.add_trace(go.Scatter(x=lam_vals, y=validation_score_ridge, mode='lines',
+    fig3_ridge.add_trace(go.Scatter(x=lam_vals, y=validation_score_ridge, mode='lines',
                               name='Validation error - Ridge'))
-    fig3.update_layout(title='Cross-validation for regularization parameter selection',
+    fig3_ridge.update_layout(title='Cross-validation for regularization parameter selection - ridge',
                        title_x=0.5)
-    fig3.show()
+    fig3_lasso.update_layout(title='Cross-validation for regularization parameter selection - lasso',
+                       title_x=0.5)
+    fig3_lasso.show()
+    fig3_ridge.show()
 
 
 
@@ -154,4 +158,3 @@ if __name__ == '__main__':
     # select_polynomial_degree(noise=0)
     # select_polynomial_degree(noise=10, n_samples=1500)
     select_regularization_parameter()
-    raise NotImplementedError()

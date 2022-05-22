@@ -41,7 +41,8 @@ def cross_validate(estimator: BaseEstimator,
         Average validation score over folds
     """
 
-    # data = deepcopy(np.concatenate((X, y), axis=0)).T
+
+    X = X.reshape(-1, 1) if X.shape[0] == 1 else X
     data = deepcopy(np.concatenate((X, y.reshape(-1, 1)), axis=1))
     np.random.shuffle(data)
     sectioned_data = np.array_split(data, cv)
@@ -51,14 +52,15 @@ def cross_validate(estimator: BaseEstimator,
     validation_scores = []
 
     for train_data, validation_data in folded_data:
-        estimator.fit(train_data[:, :-1], train_data[:, -1])
+        temp_estimator = deepcopy(estimator)
+        temp_estimator.fit(train_data[:, :-1], train_data[:, -1])
 
         train_scores.append(scoring(
-            estimator.predict(train_data[:, :-1]),
+            temp_estimator.predict(train_data[:, :-1]),
             train_data[:, -1]))
 
         validation_scores.append(scoring(
-            estimator.predict(validation_data[:, :-1]),
+            temp_estimator.predict(validation_data[:, :-1]),
             validation_data[:, -1]))
 
     return np.mean(train_scores), np.mean(validation_scores)
