@@ -99,30 +99,28 @@ def select_regularization_parameter(n_samples: int = 50, n_evaluations: int = 50
     """
     # Question 6 - Load diabetes dataset and split into training and testing portions
     diabetes = datasets.load_diabetes()
-    train = diabetes.data[:n_samples]
-    test = diabetes.data[n_samples:]
-    X_train = train[:, :-1]
-    y_train = train[:, -1]
-    X_test = test[:, :-1]
-    y_test = test[:, -1]
+    X_train = diabetes.data[:n_samples]
+    y_train = diabetes.target[:n_samples]
+    X_test = diabetes.data[n_samples:]
+    y_test = diabetes.target[n_samples:]
 
 
     # Question 7 - Perform CV for different values of the regularization parameter for Ridge and Lasso regressions
     folds = 5
-    lam_vals = pd.Series(np.linspace(0, 4, n_evaluations))
-    res_lasso = lam_vals.apply(lambda lam: cross_validate(
-        Lasso(alpha=lam), X_train, y_train,
+    ridge_start, ridge_end = 0, 0.5
+    lasso_start, lasso_end = 0.001, 1
+
+    lam_vals_lasso = pd.Series(np.linspace(lasso_start, lasso_end, n_evaluations))
+    lam_vals_ridge = pd.Series(np.linspace(ridge_start, ridge_end, n_evaluations))
+
+    res_lasso = lam_vals_lasso.apply(lambda lam: cross_validate(
+        Lasso(alpha=lam, max_iter=10000), X_train, y_train,
         scoring=mean_square_error, cv=folds))
 
-    res_ridge = lam_vals.apply(lambda lam: cross_validate(
+    res_ridge = lam_vals_ridge.apply(lambda lam: cross_validate(
         RidgeRegression(lam=lam), X_train, y_train,
         scoring=mean_square_error, cv=folds))
 
-    print(lam_vals)
-    print('------------------')
-    print(res_lasso)
-    print('------------------')
-    print(res_ridge)
     train_score_lasso = res_lasso.apply(lambda r: r[0])
     validation_score_lasso = res_lasso.apply(lambda r: r[1])
 
@@ -131,17 +129,19 @@ def select_regularization_parameter(n_samples: int = 50, n_evaluations: int = 50
 
     fig3_lasso = go.Figure()
     fig3_ridge = go.Figure()
-    fig3_lasso.add_trace(go.Scatter(x=lam_vals, y=train_score_lasso, mode='lines',
+    fig3_lasso.add_trace(go.Scatter(x=lam_vals_lasso, y=train_score_lasso, mode='lines',
                               name='Training error - Lasso'))
-    fig3_lasso.add_trace(go.Scatter(x=lam_vals, y=validation_score_lasso, mode='lines',
+    fig3_lasso.add_trace(go.Scatter(x=lam_vals_lasso, y=validation_score_lasso, mode='lines',
                               name='Validation error - Lasso'))
-    fig3_ridge.add_trace(go.Scatter(x=lam_vals, y=train_score_ridge, mode='lines',
+    fig3_ridge.add_trace(go.Scatter(x=lam_vals_ridge, y=train_score_ridge, mode='lines',
                               name='Training error - Ridge'))
-    fig3_ridge.add_trace(go.Scatter(x=lam_vals, y=validation_score_ridge, mode='lines',
+    fig3_ridge.add_trace(go.Scatter(x=lam_vals_ridge, y=validation_score_ridge, mode='lines',
                               name='Validation error - Ridge'))
-    fig3_ridge.update_layout(title='Cross-validation for regularization parameter selection - ridge',
+    fig3_ridge.update_layout(title=f'{folds} folds CV for λ selection (Ridge): λ '
+                                   f'[{ridge_start}, {ridge_end}], ({n_evaluations} evals)',
                        title_x=0.5)
-    fig3_lasso.update_layout(title='Cross-validation for regularization parameter selection - lasso',
+    fig3_lasso.update_layout(title=f'{folds} folds CV for λ selection (Lasso): λ '
+                                   f'[{lasso_start}, {lasso_end}], ({n_evaluations} evals)',
                        title_x=0.5)
     fig3_lasso.show()
     fig3_ridge.show()
@@ -149,12 +149,39 @@ def select_regularization_parameter(n_samples: int = 50, n_evaluations: int = 50
 
 
     # Question 8 - Compare best Ridge model, best Lasso model and Least Squares model
-    raise NotImplementedError()
+    best_lasso_lam = lam_vals_lasso[np.argmin(validation_score_lasso)]
+    best_ridge_lam = lam_vals_ridge[np.argmin(validation_score_ridge)]
+
+    error_lasso = mean_square_error(y_test, Lasso(alpha=best_lasso_lam).fit(X_train, y_train).predict(X_test))
+    error_ridge = RidgeRegression(lam=best_ridge_lam).fit(X_train, y_train).loss(X_test, y_test)
+    error_lin = LinearRegression().fit(X_train, y_train).loss(X_test, y_test)
+
+    sep_size = 40
+    round_acc = 2
+
+
+    print(('=' * sep_size), '\n',
+          f'Results for Lasso: \n',
+          ('-' * sep_size), '\n',
+          f'\t- Best Lasso λ = {round(best_lasso_lam, round_acc)}\n',
+          f'\t- Lasso Error  = {round(error_lasso, round_acc)}\n\n',
+          ('=' * sep_size), '\n\n',
+          f'Results for Ridge: \n',
+          ('-' * sep_size), '\n',
+          f'\t- Best Ridge λ = {round(best_ridge_lam, round_acc)}\n',
+          f'\t- Ridge Error  = {round(error_ridge, round_acc)}\n\n',
+          ('=' * sep_size), '\n\n',
+          f'Results for Least Squares: \n',
+          ('-' * sep_size), '\n',
+          f'\t- λ = {0} (no regularization)\n',
+          f'\t- Least Squares Error = {round(error_lin, round_acc)}\n\n',
+          ('=' * sep_size), '\n\n',
+          )
 
 
 if __name__ == '__main__':
     np.random.seed(0)
-    # select_polynomial_degree()
-    # select_polynomial_degree(noise=0)
-    # select_polynomial_degree(noise=10, n_samples=1500)
+    select_polynomial_degree()
+    select_polynomial_degree(noise=0)
+    select_polynomial_degree(noise=10, n_samples=1500)
     select_regularization_parameter()

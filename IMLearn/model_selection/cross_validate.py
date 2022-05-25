@@ -44,7 +44,7 @@ def cross_validate(estimator: BaseEstimator,
 
     X = X.reshape(-1, 1) if X.shape[0] == 1 else X
     data = deepcopy(np.concatenate((X, y.reshape(-1, 1)), axis=1))
-    np.random.shuffle(data)
+    # np.random.shuffle(data)
     sectioned_data = np.array_split(data, cv)
     folded_data = [[np.concatenate([sectioned_data[j] for j in range(cv) if j != i], axis=0),
                    sectioned_data[i]] for i in range(cv)]
