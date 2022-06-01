@@ -63,7 +63,7 @@ class RidgeRegression(BaseEstimator):
         """
         x = np.hstack((np.ones((X.shape[0], 1)), X)) if self.include_intercept_ else X
         d = x.shape[1]
-        x_lam = np.concatenate([x, np.eye(d) * self.lam_], axis=0)
+        x_lam = np.concatenate([x, np.eye(d) * (self.lam_**0.5)], axis=0)
         y_lam = np.concatenate([y, np.zeros(d)], axis=0)
         self.coefs_ = pinv(x_lam) @ y_lam
 
