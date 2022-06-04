@@ -107,7 +107,7 @@ def select_regularization_parameter(n_samples: int = 50, n_evaluations: int = 50
 
     # Question 7 - Perform CV for different values of the regularization parameter for Ridge and Lasso regressions
     folds = 5
-    ridge_start, ridge_end = 0, 0.5
+    ridge_start, ridge_end = 0, 0.2
     lasso_start, lasso_end = 0.001, 1
 
     lam_vals_lasso = pd.Series(np.linspace(lasso_start, lasso_end, n_evaluations))
