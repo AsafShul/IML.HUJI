@@ -27,4 +27,6 @@ class ExponentialLR(FixedLR):
         self.decay_rate = decay_rate
 
     def lr_step(self, iter, **lr_kwargs) -> float:
-        raise NotImplementedError()
+        # todo make sure:
+        return self.base_lr * pow(self.decay_rate, iter)
+        # raise NotImplementedError()
