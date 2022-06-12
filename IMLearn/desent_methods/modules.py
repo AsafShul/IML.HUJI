@@ -140,7 +140,8 @@ class LogisticModule(BaseModule):
         output: ndarray of shape (1,)
             Value of function at point self.weights
         """
-        raise NotImplementedError()
+        # todo
+        return -(1 / X.shape[0]) * (y * X @ self.weights_ - np.log(1 + np.exp(X @ self.weights_)))
 
     def compute_jacobian(self, X: np.ndarray, y: np.ndarray,
                          **kwargs) -> np.ndarray:
@@ -218,7 +219,9 @@ class RegularizedModule(BaseModule):
         output: ndarray of shape (1,)
             Value of function at point self.weights
         """
-        raise NotImplementedError()
+
+        # f(w)=||w||^2_2
+        return np.sqrt((self.weights_ ** 2).sum())  # todo
 
     def compute_jacobian(self, **kwargs) -> np.ndarray:
         """

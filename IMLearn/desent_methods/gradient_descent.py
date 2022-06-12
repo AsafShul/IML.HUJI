@@ -39,12 +39,14 @@ class GradientDescent:
         Callable function should receive as input a GradientDescent instance, and any additional
         arguments specified in the `GradientDescent.fit` function
     """
+
     def __init__(self,
                  learning_rate: BaseLR = FixedLR(1e-3),
                  tol: float = 1e-5,
                  max_iter: int = 1000,
                  out_type: str = "last",
-                 callback: Callable[[GradientDescent, ...], None] = default_callback):
+                 callback: Callable[
+                     [GradientDescent, ...], None] = default_callback):
         """
         Instantiate a new instance of the GradientDescent class
 
@@ -119,4 +121,45 @@ class GradientDescent:
                 Euclidean norm of w^(t)-w^(t-1)
 
         """
-        raise NotImplementedError()
+        # todo copy weights to avoid modifying them?
+        total_weights = f.weights
+        best_weights = f.weights
+        lowest_val = f.compute_output(X=X, y=y)
+
+        for t in range(self.max_iter_):
+            # calculate current iteration's values:
+            eta = self.learning_rate_.lr_step(t=t)
+            grad = f.compute_jacobian(X=X, y=y)
+
+            prev_wights = f.weights.copy()
+            f.weights = f.weights - eta * grad
+
+            val = f.compute_output(X=X, y=y)
+            delta = np.linalg.norm(f.weights - prev_wights)
+
+            # update weights for output type:
+            total_weights += f.weights
+            if lowest_val > val:
+                best_weights = f.weights
+                lowest_val = val
+
+            # call callback function:
+
+            self.callback_(self,
+                           weights=f.weights,
+                           val=val,
+                           grad=grad,
+                           t=t,
+                           eta=eta,
+                           delta=delta)
+
+            # check for stopping condition:
+            if delta < self.tol_:
+                break
+
+        if self.out_type_ == "best":
+            f.weights = best_weights
+        elif self.out_type_ == "average":
+            f.weights = np.mean(total_weights, axis=0)
+
+        return f.weights

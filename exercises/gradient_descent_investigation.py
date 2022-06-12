@@ -73,25 +73,82 @@ def get_gd_state_recorder_callback() -> Tuple[Callable[[], None], List[np.ndarra
     weights: List[np.ndarray]
         Recorded parameters
     """
-    raise NotImplementedError()
+
+    values_array = []
+    weights_array = []
+
+    def callback(model, weights, val, grad, t, eta, delta):  # todo like this?????
+        values_array.append(val)
+        weights_array.append(weights)
+
+    return callback, values_array, weights_array
 
 
 def compare_fixed_learning_rates(init: np.ndarray = np.array([np.sqrt(2), np.e / 3]),
                                  etas: Tuple[float] = (1, .1, .01, .001)):
-    raise NotImplementedError()
+    # loop over the modules:
+    for name, base_module in {"L1": L1, "L2": L2}.items():
+        # loop over the learning rates:
+        for eta in etas:
+            # initialize module's weights:
+            module = base_module(weights=init.copy())
+
+            # initialize the fixed learning rate class:
+            learning_rate = FixedLR(eta)
+
+            # get callback function for recording the state of the gradient
+            # descent algorithm:
+            callback, values, weights = get_gd_state_recorder_callback()
+
+            # initialize the gradient descent algorithm:
+            GD = GradientDescent(learning_rate=learning_rate, callback=callback)
+
+            GD.fit(module, np.nan, np.nan)
+
+            fig = plot_descent_path(module=base_module,
+                                    descent_path=np.array(weights),
+                                    title=f"{name}: learning rate = {eta}")
+            fig.show() # todo choose what to show
 
 
 def compare_exponential_decay_rates(init: np.ndarray = np.array([np.sqrt(2), np.e / 3]),
                                     eta: float = .1,
                                     gammas: Tuple[float] = (.9, .95, .99, 1)):
-    # Optimize the L1 objective using different decay-rate values of the exponentially decaying learning rate
-    raise NotImplementedError()
+    # # Optimize the L1 objective using different decay-rate values of the
+    # # exponentially decaying learning rate:
+    # raise NotImplementedError()
+    #
+    # # Plot algorithm's convergence for the different values of gamma
+    # raise NotImplementedError()
+    #
+    # # Plot descent path for gamma=0.95
+    # raise NotImplementedError() # todo check what to plot and explain
 
-    # Plot algorithm's convergence for the different values of gamma
-    raise NotImplementedError()
+    # loop over the modules:
+    for name, base_module in {"L1": L1, "L2": L2}.items():
+        # loop over the learning rates:
+        for gamma in gammas:
+            # initialize module's weights:
+            module = base_module(weights=init.copy())
 
-    # Plot descent path for gamma=0.95
-    raise NotImplementedError()
+            # initialize the fixed learning rate class:
+            learning_rate = ExponentialLR(eta, gamma)
+
+            # get callback function for recording the state of the gradient
+            # descent algorithm:
+            callback, values, weights = get_gd_state_recorder_callback()
+
+            # initialize the gradient descent algorithm:
+            GD = GradientDescent(learning_rate=learning_rate,
+                                 callback=callback)
+
+            GD.fit(module, np.nan, np.nan)
+
+            fig = plot_descent_path(module=base_module,
+                                    descent_path=np.array(weights),
+                                    title=f"{name}: learning rate = {eta},"
+                                          f" decay = {gamma}")
+            fig.show()
 
 
 def load_data(path: str = "../datasets/SAheart.data", train_portion: float = .8) -> \
@@ -140,6 +197,6 @@ def fit_logistic_regression():
 
 if __name__ == '__main__':
     np.random.seed(0)
-    compare_fixed_learning_rates()
-    compare_exponential_decay_rates()
+    # compare_fixed_learning_rates()
+    # compare_exponential_decay_rates()
     fit_logistic_regression()
