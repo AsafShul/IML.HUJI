@@ -124,7 +124,8 @@ class GradientDescent:
         # todo copy weights to avoid modifying them?
         total_weights = f.weights
         best_weights = f.weights
-        lowest_val = f.compute_output(X=X, y=y)
+        # lowest_val = f.compute_output(X=X, y=y)
+        lowest_delta = np.inf
 
         for t in range(self.max_iter_):
             # calculate current iteration's values:
@@ -139,9 +140,11 @@ class GradientDescent:
 
             # update weights for output type:
             total_weights += f.weights
-            if lowest_val > val:
+            # if lowest_val > val:
+            if lowest_delta > delta:
                 best_weights = f.weights
-                lowest_val = val
+                lowest_delta = delta
+                # lowest_val = val
 
             # call callback function:
 
