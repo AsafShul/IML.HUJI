@@ -9,10 +9,15 @@ from IMLearn.learners.classifiers.logistic_regression import LogisticRegression
 from IMLearn.utils import split_train_test
 
 import plotly.graph_objects as go
+import plotly.express as px
+
 
 from IMLearn.model_selection import cross_validate # todo
 from IMLearn.metrics.loss_functions import misclassification_error # todo
 
+
+MAX_ITER = 20000
+LEARNING_RATE = 1e-4
 
 
 def plot_descent_path(module: Type[BaseModule],
@@ -86,7 +91,7 @@ def get_gd_state_recorder_callback() -> Tuple[
     weights_array = []
 
     def callback(model, weights, val, grad, t, eta,
-                 delta):  # todo like this?????
+                 delta):
         values_array.append(val)
         weights_array.append(weights)
 
@@ -96,12 +101,16 @@ def get_gd_state_recorder_callback() -> Tuple[
 def compare_fixed_learning_rates(
         init: np.ndarray = np.array([np.sqrt(2), np.e / 3]),
         etas: Tuple[float] = (1, .1, .01, .001)):
+    max_iter = 1000
+
     # loop over the modules:
-    for name, base_module in {"L1": L1, "L2": L2}.items():
+    for name, penalty_module in {"L1": L1, "L2": L2}.items():
+        losses = pd.DataFrame(columns=etas)
+
         # loop over the learning rates:
         for eta in etas:
             # initialize module's weights:
-            module = base_module(weights=init.copy())
+            module = penalty_module(weights=init.copy())
 
             # initialize the fixed learning rate class:
             learning_rate = FixedLR(eta)
@@ -112,32 +121,37 @@ def compare_fixed_learning_rates(
 
             # initialize the gradient descent algorithm:
             GD = GradientDescent(learning_rate=learning_rate,
-                                 callback=callback)
+                                 callback=callback, max_iter=max_iter)
 
             GD.fit(module, np.nan, np.nan)
 
-            fig = plot_descent_path(module=base_module,
+            if len(values) < max_iter:
+                values = values + ([np.nan] * (max_iter - len(values)))
+
+            losses[eta] = values
+
+            fig = plot_descent_path(module=penalty_module,
                                     descent_path=np.array(weights),
                                     title=f"{name}: learning rate = {eta}")
-            fig.show()  # todo choose what to show
+            fig.show()
+
+        val_fig = px.line(losses)
+        val_fig.update_layout(title=f"{name}: learning rate comparison",
+                              title_x=0.5,
+                              legend_title="etas:",)
+        val_fig.show()
 
 
 def compare_exponential_decay_rates(
         init: np.ndarray = np.array([np.sqrt(2), np.e / 3]),
         eta: float = .1,
         gammas: Tuple[float] = (.9, .95, .99, 1)):
-    # # Optimize the L1 objective using different decay-rate values of the
-    # # exponentially decaying learning rate:
-    # raise NotImplementedError()
-    #
-    # # Plot algorithm's convergence for the different values of gamma
-    # raise NotImplementedError()
-    #
-    # # Plot descent path for gamma=0.95
-    # raise NotImplementedError() # todo check what to plot and explain
+    max_iter = 1000
 
     # loop over the modules:
     for name, base_module in {"L1": L1, "L2": L2}.items():
+        losses = pd.DataFrame(columns=gammas)
+
         # loop over the learning rates:
         for gamma in gammas:
             # initialize module's weights:
@@ -156,11 +170,21 @@ def compare_exponential_decay_rates(
 
             GD.fit(module, np.nan, np.nan)
 
+            if len(values) < max_iter:
+                values = values + ([np.nan] * (max_iter - len(values)))
+
+            losses[gamma] = values
+
             fig = plot_descent_path(module=base_module,
                                     descent_path=np.array(weights),
                                     title=f"{name}: learning rate = {eta},"
                                           f" decay = {gamma}")
             fig.show()
+        val_fig = px.line(losses)
+        val_fig.update_layout(title=f"{name}: learning rate comparison",
+                              title_x=0.5,
+                              legend_title="etas:", )
+        val_fig.show()
 
 
 def load_data(path: str = "../datasets/SAheart.data",
