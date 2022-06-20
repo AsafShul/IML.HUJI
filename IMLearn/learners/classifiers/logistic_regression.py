@@ -50,27 +50,35 @@ class LogisticRegression(BaseEstimator):
         Fits model using specified `self.optimizer_` passed when instantiating class and includes an intercept
         if specified by `self.include_intercept_
         """
+        # initialize wights:
+        m = X.shape[0]
+        X = np.c_[np.ones(m), X] if self.include_intercept_ else X
 
-        # todo none coefs_ are not initialized, rand??
-        self.coefs_ = np.random.random(X.shape[1])
+        d = X.shape[1]
+        initial_weights = np.random.normal(0, 1, d) / np.sqrt(d)
 
+        # initialize module base on input:
         if self.penalty_ == "l1":
             module = RegularizedModule(
-                fidelity_module=LogisticModule(self.coefs_),
-                regularization_module=L1(self.coefs_),
+                # fidelity_module=LogisticModule(initial_weights),
+                fidelity_module=LogisticModule(),
+                # regularization_module=L1(initial_weights),
+                regularization_module=L1(),
                 lam=self.lam_,
-                weights=self.coefs_,
+                weights=initial_weights,
                 include_intercept=self.include_intercept_)
 
         elif self.penalty_ == "l2":
             module = RegularizedModule(
-                fidelity_module=LogisticModule(self.coefs_),
-                regularization_module=L2(self.coefs_),
+                # fidelity_module=LogisticModule(initial_weights),
+                fidelity_module=LogisticModule(),
+                # regularization_module=L2(initial_weights),
+                regularization_module=L2(),
                 lam=self.lam_,
-                weights=self.coefs_,
+                weights=initial_weights,
                 include_intercept=self.include_intercept_)
         else:
-            module = LogisticModule(self.coefs_)
+            module = LogisticModule(initial_weights)
 
         self.coefs_ = self.solver_.fit(module, X, y)
 
@@ -110,6 +118,11 @@ class LogisticRegression(BaseEstimator):
             Probability of each sample being classified as `1` according to the fitted model
         """
         # return self.sigmoid(X.T @ self.coefs_) # todo check!!!!
+        m = X.shape[0]
+
+        if self.include_intercept_:
+            X = np.c_[np.ones(m), X]
+
         return self.sigmoid(X @ self.coefs_)
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
