@@ -121,10 +121,9 @@ class GradientDescent:
                 Euclidean norm of w^(t)-w^(t-1)
 
         """
-        # todo copy weights to avoid modifying them?
         total_weights = f.weights
         best_weights = f.weights
-        # lowest_val = f.compute_output(X=X, y=y)
+
         lowest_delta = np.inf
 
         for t in range(self.max_iter_):
@@ -144,10 +143,8 @@ class GradientDescent:
             if lowest_delta > delta:
                 best_weights = f.weights
                 lowest_delta = delta
-                # lowest_val = val
 
             # call callback function:
-
             self.callback_(self,
                            weights=f.weights,
                            val=val,

@@ -98,7 +98,6 @@ class LogisticRegression(BaseEstimator):
         """
         return (self.predict_proba(X) > self.alpha_).astype(int)
 
-    # todo
     @staticmethod
     def sigmoid(x: np.ndarray) -> np.ndarray:
         return 1 / (1 + np.exp(-x))
@@ -117,7 +116,6 @@ class LogisticRegression(BaseEstimator):
         probabilities: ndarray of shape (n_samples,)
             Probability of each sample being classified as `1` according to the fitted model
         """
-        # return self.sigmoid(X.T @ self.coefs_) # todo check!!!!
         m = X.shape[0]
 
         if self.include_intercept_:

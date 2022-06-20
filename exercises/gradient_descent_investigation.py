@@ -19,6 +19,7 @@ from IMLearn.metrics.loss_functions import misclassification_error
 MAX_ITER = 20000
 LEARNING_RATE = 1e-4
 LAMBDAS = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1]
+FOLDS = 5
 
 
 def plot_descent_path(module: Type[BaseModule],
@@ -238,8 +239,16 @@ def fit_logistic_regression():
     y_pred_proba = log_reg.predict_proba(X_train.to_numpy())
     fpr, tpr, thresholds = roc_curve(y_train, y_pred_proba)
 
+    # find the best alpha and loss:
+    best_alpha = thresholds[np.argmax(tpr - fpr)]
+    loss_for_best_alpha = LogisticRegression(solver=GD, alpha=best_alpha).fit(
+        X_train.to_numpy(), y_train.to_numpy()).loss(
+        X_test.to_numpy(), y_test.to_numpy())
 
-    # np.argmax
+    # q.8 prints:
+    print('fit_logistic_regression:')
+    print(f'\t- Optimal ROC alpha from argmax[TPR - FPR] is {round(best_alpha, 3)}')
+    print(f'\t- Loss for that alpha is {round(loss_for_best_alpha, 3)}')
 
     go.Figure(
         data=[go.Scatter(x=[0, 1], y=[0, 1], mode="lines",
@@ -256,13 +265,12 @@ def fit_logistic_regression():
 
     # Fitting l1- and l2-regularized logistic regression models,
     # using cross-validation to specify values of regularization parameter
-
-    folds = 5
-
+    print()
+    print('Cross Validation: ')
     for regularization in ['l1', 'l2']:
         GD = GradientDescent(learning_rate=FixedLR(LEARNING_RATE),
-                             # max_iter=MAX_ITER)
-                             max_iter=2000)
+                             max_iter=MAX_ITER)
+                             # max_iter=2000)  # works very similar, but way faster
 
         lambdas = pd.Series(LAMBDAS)
         res = lambdas.apply(lambda l: cross_validate(LogisticRegression(solver=GD,
@@ -271,11 +279,12 @@ def fit_logistic_regression():
                                                      X_train.to_numpy(),
                                                      y_train.to_numpy(),
                                                      scoring=misclassification_error,
-                                                     cv=folds))
+                                                     cv=FOLDS))
 
         train_score = res.apply(lambda r: r[0])
         validation_score = res.apply(lambda r: r[1])
 
+        # cross validation results:
         fig2 = go.Figure()
         fig2.add_trace(go.Scatter(x=lambdas, y=train_score, mode='lines',
                                   name='Training error'))
@@ -284,11 +293,15 @@ def fit_logistic_regression():
         fig2.update_layout(
             title=f'Cross-validation for {regularization.upper()} Regularized Logistic regression',
             title_x=0.5)
-        fig2.show()
+        # fig2.show()
+
+        best_lambda = lambdas[validation_score.idxmin()]
+        print(f'\t- Best lambda for {regularization.upper()} regularization is {best_lambda}')
+        print(f'\t- Test error for that lambda is {round(validation_score.min(), 3)}\n')
 
 
 if __name__ == '__main__':
     np.random.seed(0)
-    # compare_fixed_learning_rates()
-    # compare_exponential_decay_rates()
+    compare_fixed_learning_rates()
+    compare_exponential_decay_rates()
     fit_logistic_regression()
