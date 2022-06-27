@@ -3,6 +3,13 @@ from IMLearn.base.base_module import BaseModule
 from IMLearn.metrics.loss_functions import cross_entropy, softmax
 
 
+def linear_activation(X: np.ndarray) -> np.ndarray: # todo module class?
+    """
+    Default - Linear activation function
+    """
+    return X
+
+
 class FullyConnectedLayer(BaseModule):
     """
     Module of a fully connected layer in a neural network
@@ -48,7 +55,20 @@ class FullyConnectedLayer(BaseModule):
         Weights are randomly initialized following N(0, 1/input_dim)
         """
         super().__init__()
-        raise NotImplementedError()
+        # todo:
+        # self.input_dim_ = input_dim if not include_intercept else input_dim + 1
+        self.input_dim_ = input_dim
+        self.output_dim_ = output_dim
+
+        self.activation_ = activation if activation is not None else linear_activation
+        self.include_intercept = include_intercept
+
+        self.weights = np.random.randn(self.input_dim_, self.output_dim_) / np.sqrt(self.input_dim_)
+        self.weights = np.random.normal(0, 1/input_dim, (input_dim + 1 if include_intercept else input_dim, output_dim))
+
+        # todo make sure
+        # if include_intercept:
+        #     self.weights = np.concatenate((np.ones((1, output_dim)), self.weights), axis=0)
 
     def compute_output(self, X: np.ndarray, **kwargs) -> np.ndarray:
         """
@@ -65,7 +85,8 @@ class FullyConnectedLayer(BaseModule):
         output: ndarray of shape (n_samples, output_dim)
             Value of function at point self.weights
         """
-        raise NotImplementedError()
+        # todo intercept?
+        return self.activation_.compute_output(X=(X @ self.weights))
 
     def compute_jacobian(self, X: np.ndarray, **kwargs) -> np.ndarray:
         """
@@ -81,7 +102,8 @@ class FullyConnectedLayer(BaseModule):
         output: ndarray of shape (input_dim, n_samples)
             Derivative with respect to self.weights at point self.weights
         """
-        raise NotImplementedError()
+        # todo intercept?
+        return self.activation_.compute_jacobian(X=(X @ self.weights))
 
 
 class ReLU(BaseModule):
@@ -103,7 +125,7 @@ class ReLU(BaseModule):
         output: ndarray of shape (n_samples, input_dim)
             Data after performing the ReLU activation function
         """
-        raise NotImplementedError()
+        return np.max(X, 0)
 
     def compute_jacobian(self, X: np.ndarray, **kwargs) -> np.ndarray:
         """
@@ -119,7 +141,7 @@ class ReLU(BaseModule):
         output: ndarray of shape (n_samples,)
             Element-wise derivative of ReLU with respect to given data
         """
-        raise NotImplementedError()
+        return np.where(X > 0, 1, 0)
 
 
 class CrossEntropyLoss(BaseModule):
@@ -145,7 +167,9 @@ class CrossEntropyLoss(BaseModule):
         output: ndarray of shape (n_samples,)
             cross-entropy loss value of given X and y
         """
-        raise NotImplementedError()
+
+        y_pred = np.apply_along_axis(softmax, 1, X)
+        return np.apply_along_axis(cross_entropy, 1, y, y_pred)
 
     def compute_jacobian(self, X: np.ndarray, y: np.ndarray, **kwargs) -> np.ndarray:
         """
@@ -164,5 +188,13 @@ class CrossEntropyLoss(BaseModule):
         output: ndarray of shape (n_samples, input_dim)
             derivative of cross-entropy loss with respect to given input
         """
-        raise NotImplementedError()
+        # todo make sure !
+        X_softmax = softmax(X)
+        X_softmax_diag = np.diag(X_softmax)
+        softmax_jacobian_diag = X_softmax_diag * (1 - X_softmax_diag)
+
+        softmax_jacobian = X_softmax @ X_softmax.T
+        np.fill_diagonal(softmax_jacobian, softmax_jacobian_diag)
+
+        return softmax_jacobian
 

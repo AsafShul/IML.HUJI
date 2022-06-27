@@ -18,6 +18,7 @@ def mean_square_error(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     """
     return ((y_true.reshape((-1, 1)) - y_pred.reshape((-1, 1))) ** 2).mean()
 
+
 def misclassification_error(y_true: np.ndarray, y_pred: np.ndarray, normalize: bool = True) -> float:
     """
     Calculate misclassification loss
@@ -78,7 +79,7 @@ def cross_entropy(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     -------
     Cross entropy of given predictions
     """
-    raise NotImplementedError()
+    return -np.mean(y_true * np.log(y_pred))
 
 
 def softmax(X: np.ndarray) -> np.ndarray:
@@ -94,4 +95,5 @@ def softmax(X: np.ndarray) -> np.ndarray:
     output: ndarray of shape (n_samples, n_features)
         Softmax(x) for every sample x in given data X
     """
-    raise NotImplementedError()
+    exp_X = np.exp(X)
+    return exp_X / exp_X.sum(axis=0)

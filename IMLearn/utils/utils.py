@@ -60,4 +60,6 @@ def confusion_matrix(a: np.ndarray, b: np.ndarray) -> np.ndarray:
         A confusion matrix where the value of the i,j index shows the number of times value `i` was found in vector `a`
         while value `j` vas found in vector `b`
     """
-    raise NotImplementedError()
+    y_true = pd.Series(a)
+    y_pred = pd.Series(b) # todo makesure
+    return pd.crosstab(y_true, y_pred).to_numpy()

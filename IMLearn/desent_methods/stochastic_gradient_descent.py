@@ -58,7 +58,11 @@ class StochasticGradientDescent:
             Callable function receives as input any argument relevant for the current GD iteration. Arguments
             are specified in the `GradientDescent.fit` function
         """
-        raise NotImplementedError()
+        self.learning_rate_ = learning_rate
+        self.tol_ = tol
+        self.max_iter_ = max_iter
+        self.batch_size_ = batch_size
+        self.callback_ = callback # todo
 
     def fit(self, f: BaseModule, X: np.ndarray, y: np.ndarray):
         """
@@ -107,6 +111,47 @@ class StochasticGradientDescent:
             - batch_indices: np.ndarray of shape (n_batch,)
                 Sample indices used in current SGD iteration
         """
+
+        # # Initialize weights
+        # weights = f.get_weights()
+        # n_features = weights.shape[0]
+        # n_samples = X.shape[0]
+        # n_batches = int(np.ceil(n_samples / self.batch_size_))
+        # batch_indices = np.arange(n_samples)
+        # np.random.shuffle(batch_indices)
+        # batch_indices = batch_indices[:self.batch_size_]
+        #
+        # # Initialize solution
+        # solution = weights
+        # val = f.compute_output(X[batch_indices], y[batch_indices])
+        # jac = f.compute_jacobian(X[batch_indices], y[batch_indices])
+        # eta = self.learning_rate_.lr_step(0)
+        # delta = np.linalg.norm(weights - solution)
+        # self.callback_(solver=self, weights=weights, val=val, grad=jac, t=0, eta=eta, delta=delta, batch_indices=batch_indices)
+        #
+        # # Optimize module
+        # for t in range(1, self.max_iter_):
+        #     # Update weights
+        #     weights -= eta * jac
+        #     # Update solution
+        #     solution = weights
+        #     # Update objective function value
+        #     val = f.compute_output(X[batch_indices], y[batch_indices])
+        #     # Update jacobian
+        #     jac = f.compute_jacobian(X[batch_indices], y[batch_indices])
+        #     # Update learning rate
+        #     eta = self.learning_rate_.lr_step(t)
+        #     # Update delta
+        #     delta = np.linalg.norm(weights - solution)
+        #     # Update batch indices
+        #     batch_indices = batch_indices[1:] + batch_indices[:1]
+        #     # Call callback function
+        #     self.callback_(solver=self, weights=weights, val=val, grad=jac, t=t, eta=eta, delta=delta, batch_indices=batch_indices)
+        #     # Check stopping criterion
+        #     if delta < self.tol_:
+        #         break
+
+
         raise NotImplementedError()
 
     def _partial_fit(self, f: BaseModule, X: np.ndarray, y: np.ndarray, t: int) -> Tuple[np.ndarray, np.ndarray, float]:
