@@ -28,12 +28,13 @@ class NeuralNetwork(BaseEstimator, BaseModule):
                  loss_fn: BaseModule,
                  solver: Union[StochasticGradientDescent, GradientDescent]):
         super().__init__() # todo
-        self.layers_ = modules
+
+        self.modules_ = modules
         self.loss_function_ = loss_fn
         self.gradient_descent_ = solver
 
-        self.pre_activations_ = None
-        self.post_activations_ = None
+        self.pre_activations_ = []
+        self.post_activations_ = []
 
     # region BaseEstimator implementations
     def _fit(self, X: np.ndarray, y: np.ndarray) -> NoReturn:
@@ -87,9 +88,10 @@ class NeuralNetwork(BaseEstimator, BaseModule):
             Performance under specified loss function
         """
 
-        self.compute_output(X, y)
-        return self.loss_function_.compute_output(self.post_activations_[-1], y)
-        raise NotImplementedError()
+        # self.compute_output(X, y)
+        # return self.loss_function_.compute_output(X=X, y=y).sum()  # todo sum?
+        return self.loss_function_.compute_output(X=self.post_activations_[-1], y=y).sum()
+        # raise NotImplementedError() # todo
     # endregion
 
     # region BaseModule implementations
@@ -121,7 +123,7 @@ class NeuralNetwork(BaseEstimator, BaseModule):
     def compute_prediction(self, X: np.ndarray):
         """
         Compute network output (forward pass) with respect to modules'
-        weights given input samples, except pass through specified loss function
+        weights given input samples, ***except*** pass through specified loss function
 
         Parameters
         ----------
@@ -138,7 +140,7 @@ class NeuralNetwork(BaseEstimator, BaseModule):
 
         self.post_activations_.append(X.copy())
 
-        for t, layer in enumerate(self.layers_):
+        for t, layer in enumerate(self.modules_):
             self.pre_activations_.append(layer.weights @ self.post_activations_[-1].T) # todo transpose? if so, also in the layer class
             self.post_activations_.append(layer.compute_output(self.post_activations_[-1]))
 
@@ -167,13 +169,13 @@ class NeuralNetwork(BaseEstimator, BaseModule):
         Function depends on values calculated in forward pass and stored in
         `self.pre_activations_` and `self.post_activations_`
         """
-        T = len(self.layers_)
+        T = len(self.modules_)
         delta = []
         partial_derivatives = []
 
-        delta.append(self.loss_function_.compute_jacobian(X=self.post_activations_[-1], y=y))
+        delta.append(self.loss_function_.compute_jacobian(X=self.post_activations_[-1] if self.post_activations_ else X, y=y))
 
-        for i, layer in enumerate(reversed(self.layers_)):
+        for i, layer in enumerate(reversed(self.modules_)):
             t = T - i - 1
             delta_t_plus_1 = delta[-1] # todo
 

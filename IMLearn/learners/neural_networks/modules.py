@@ -61,14 +61,12 @@ class FullyConnectedLayer(BaseModule):
         self.output_dim_ = output_dim
 
         self.activation_ = activation if activation is not None else linear_activation
-        self.include_intercept = include_intercept
+        self.include_intercept_ = include_intercept
 
         self.weights = np.random.randn(self.input_dim_, self.output_dim_) / np.sqrt(self.input_dim_)
         self.weights = np.random.normal(0, 1/input_dim, (input_dim + 1 if include_intercept else input_dim, output_dim))
 
-        # todo make sure
-        # if include_intercept:
-        #     self.weights = np.concatenate((np.ones((1, output_dim)), self.weights), axis=0)
+        # bias is the first column of weights, one bias per output neuron
 
     def compute_output(self, X: np.ndarray, **kwargs) -> np.ndarray:
         """
@@ -86,6 +84,11 @@ class FullyConnectedLayer(BaseModule):
             Value of function at point self.weights
         """
         # todo intercept?
+        m = X.shape[0]
+
+        if self.include_intercept_:
+            X = np.c_[np.ones(m), X]
+
         return self.activation_.compute_output(X=(X @ self.weights))
 
     def compute_jacobian(self, X: np.ndarray, **kwargs) -> np.ndarray:
@@ -102,8 +105,13 @@ class FullyConnectedLayer(BaseModule):
         output: ndarray of shape (input_dim, n_samples)
             Derivative with respect to self.weights at point self.weights
         """
-        # todo intercept?
-        return self.activation_.compute_jacobian(X=(X @ self.weights))
+        # todo intercept?, X.T?
+        m = X.shape[0]
+
+        if self.include_intercept_:
+            X = np.c_[np.ones(m), X]
+
+        return self.activation_.compute_jacobian(X=(X @ self.weights)) * X.T
 
 
 class ReLU(BaseModule):
