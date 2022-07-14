@@ -31,7 +31,8 @@ class FullyConnectedLayer(BaseModule):
     include_intercept: bool
         Should layer include an intercept or not
     """
-    def __init__(self, input_dim: int, output_dim: int, activation: BaseModule = None, include_intercept: bool = True):
+    def __init__(self, input_dim: int, output_dim: int,
+                 activation: BaseModule = None, include_intercept: bool = True):
         """
         Initialize a module of a fully connected layer
 
@@ -60,15 +61,29 @@ class FullyConnectedLayer(BaseModule):
         self.input_dim_ = input_dim
         self.output_dim_ = output_dim
 
-        self.activation_ = activation if activation is not None else linear_activation
+        # self.activation_ = activation if activation is not None else linear_activation
+        self.activation_ = activation
         self.include_intercept_ = include_intercept
 
-        self.weights = np.random.randn(self.input_dim_, self.output_dim_) / np.sqrt(self.input_dim_)
-        self.weights = np.random.normal(0, 1/input_dim, (input_dim + 1 if include_intercept else input_dim, output_dim))
+        weights_dim = (input_dim, output_dim) if not include_intercept else (input_dim + 1, output_dim)
+
+        self.weights = np.random.randn(*weights_dim) / np.sqrt(self.input_dim_) # todo + 1?
+        # self.weights = np.random.randn(self.input_dim_, self.output_dim_) / np.sqrt(self.input_dim_)
+
+        # todo theres a problem, overrides !
+        # self.weights = np.random.normal(0, 1/input_dim, (input_dim + 1 if include_intercept else input_dim, output_dim))
+
+
+        # self.bias = (np.random.randn(self.output_dim_) / np.sqrt(self.input_dim_)) if include_intercept else np.zeros(self.output_dim_)
 
         # bias is the first column of weights, one bias per output neuron
 
-    def compute_output(self, X: np.ndarray, **kwargs) -> np.ndarray:
+
+
+    # todo
+    # def compute_output(self, X: np.ndarray, **kwargs) -> np.ndarray:
+    # def compute_output(self, X: np.ndarray, no_activation: bool=False, **kwargs) -> np.ndarray:
+    def compute_output(self, X: np.ndarray, pre_activations, post_activations, no_activation: bool=False, **kwargs) -> np.ndarray:
         """
         Compute activation(weights @ x) for every sample x: output value of layer at point
         self.weights and given input
@@ -83,13 +98,18 @@ class FullyConnectedLayer(BaseModule):
         output: ndarray of shape (n_samples, output_dim)
             Value of function at point self.weights
         """
-        # todo intercept?
         m = X.shape[0]
 
         if self.include_intercept_:
             X = np.c_[np.ones(m), X]
 
-        return self.activation_.compute_output(X=(X @ self.weights))
+        z = X @ self.weights  # todo reverse?
+        a = self.activation_.compute_output(X=z, **kwargs) if self.activation_ is not None else z
+
+        pre_activations.append(z)
+        post_activations.append(a)
+        return a
+
 
     def compute_jacobian(self, X: np.ndarray, **kwargs) -> np.ndarray:
         """
@@ -111,7 +131,17 @@ class FullyConnectedLayer(BaseModule):
         if self.include_intercept_:
             X = np.c_[np.ones(m), X]
 
-        return self.activation_.compute_jacobian(X=(X @ self.weights)) * X.T
+        # z = self.weights @ X.T
+        # z_ = X @ self.weights
+
+        # TODO !!!
+
+        # z_ = X.T @ self.weights
+
+        # return self.activation_.compute_jacobian(X=z_, **kwargs) @ X
+        # return X.T @ self.activation_.compute_jacobian(X=z_, **kwargs)
+        # return self.activation_.compute_jacobian(X=z, **kwargs) if self.activation_ is not None else np.eye(m)
+        return self.activation_.compute_jacobian(X=X, **kwargs) if self.activation_ is not None else np.eye(m)
 
 
 class ReLU(BaseModule):
@@ -133,7 +163,10 @@ class ReLU(BaseModule):
         output: ndarray of shape (n_samples, input_dim)
             Data after performing the ReLU activation function
         """
-        return np.max(X, 0)
+        # return np.max(X, 0)
+        # todo ??
+
+        return np.where(X > 0, X, 0)
 
     def compute_jacobian(self, X: np.ndarray, **kwargs) -> np.ndarray:
         """
@@ -176,8 +209,17 @@ class CrossEntropyLoss(BaseModule):
             cross-entropy loss value of given X and y
         """
 
-        y_pred = np.apply_along_axis(softmax, 1, X)
-        return np.apply_along_axis(cross_entropy, 1, y, y_pred)
+        one_hot_y = np.eye(np.max(y) + 1)[y]
+        softmax_X = softmax(X)
+        return -np.diag((np.log(softmax_X) @ one_hot_y.T))
+
+
+        #
+        #
+        # return cross_entropy(softmax_X, one_hot_y)
+
+        # y_pred = np.apply_along_axis(softmax, 1, X)
+        # return np.apply_along_axis(cross_entropy, 1, y, y_pred)
 
     def compute_jacobian(self, X: np.ndarray, y: np.ndarray, **kwargs) -> np.ndarray:
         """
@@ -196,13 +238,23 @@ class CrossEntropyLoss(BaseModule):
         output: ndarray of shape (n_samples, input_dim)
             derivative of cross-entropy loss with respect to given input
         """
-        # todo make sure !
-        X_softmax = softmax(X)
-        X_softmax_diag = np.diag(X_softmax)
-        softmax_jacobian_diag = X_softmax_diag * (1 - X_softmax_diag)
+        # one_hot_y = np.eye(np.max(y) + 1)[y]
+        y_pred = np.argmax(softmax(X), axis=1)
+        # S = -(np.log(softmax_X) @ one_hot_y.T)
+        # return np.diag(S) - S @ softmax_X.T
 
-        softmax_jacobian = X_softmax @ X_softmax.T
-        np.fill_diagonal(softmax_jacobian, softmax_jacobian_diag)
-
-        return softmax_jacobian
+        return -(y / y_pred).T
+        #
+        #
+        #
+        #
+        # # todo make sure !
+        # X_softmax = softmax(X)
+        # X_softmax_diag = np.diag(X_softmax)
+        # softmax_jacobian_diag = X_softmax_diag * (1 - X_softmax_diag)
+        #
+        # softmax_jacobian = X_softmax @ X_softmax.T
+        # np.fill_diagonal(softmax_jacobian, softmax_jacobian_diag)
+        #
+        # return softmax_jacobian
 

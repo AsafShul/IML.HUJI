@@ -98,3 +98,7 @@ def softmax(X: np.ndarray) -> np.ndarray:
     exp_X = np.exp(X)
     # return exp_X / exp_X.sum(axis=1)[:, np.newaxis] # todo
     return exp_X / exp_X.sum(axis=1).reshape((-1, 1))
+
+    # exp_scores = np.exp(X)
+    # probs = exp_scores / np.sum(exp_scores, axis=1, keepdims=True)
+    # return probs

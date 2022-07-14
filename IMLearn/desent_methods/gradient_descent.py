@@ -128,13 +128,13 @@ class GradientDescent:
 
         for t in range(self.max_iter_):
             # calculate current iteration's values:
+            val = f.compute_output(X=X, y=y)
             eta = self.learning_rate_.lr_step(t=t)
             grad = f.compute_jacobian(X=X, y=y)
 
             prev_wights = f.weights.copy()
             f.weights = f.weights - eta * grad
 
-            val = f.compute_output(X=X, y=y)
             delta = np.linalg.norm(f.weights - prev_wights)
 
             # update weights for output type:

@@ -133,6 +133,35 @@ if __name__ == '__main__':
     # Question 1: Fitting simple network with two hidden layers                                    #
     # ---------------------------------------------------------------------------------------------#
 
+
+    """
+    a0 := (m, d)  = (1200, 2)
+    
+    w1 := (d, l1_neurons) = (2, 16)
+    b1 := (1, l1_neurons) = (1, 16)
+    z1 := (m, l1_neurons) = (1200, 16)
+    a1 := (m, l1_neurons) = (1200, 16)
+    
+    w2 := (l1_neurons, l2_neurons) = (17, 16)
+    b2 := (1, l2_neurons) = (1, 16)
+    z2 := (m, l2_neurons) = (1200, 16)
+    a2 := (m, l2_neurons) = (1200, 16)
+    
+    w3 := (l2_neurons, l3_neurons) = (17, 16)
+    b3 := (1, l3_neurons) = (1, 16)
+    z3 := (m, l3_neurons) = (1200, 16)
+    a3 := (m, l3_neurons) = (1200, 16)    
+    
+    w4 := (l3_neurons, n_classes) = (16, 3)
+    b4 := (1, n_classes) = (0, 3)
+    z4 := (m, n_classes) = (1200, 3)
+    a4 := (m, 1) = (1200, 1)
+    
+    c := (m, 1) = (1200, 1)
+    
+    
+    """
+
     # Create simple network:  # todo here?
     layer_0_input_dim = n_features
     layer_0_output_dim = layer_1_input_dim = 16
@@ -142,7 +171,7 @@ if __name__ == '__main__':
 
     input_layer = FullyConnectedLayer(input_dim=layer_0_input_dim,
                                       output_dim=layer_0_output_dim,
-                                      activation=ReLU(),
+                                      activation=ReLU(),  # todo
                                       include_intercept=False)
 
     hidden_layer_1 = FullyConnectedLayer(input_dim=layer_1_input_dim,
@@ -157,7 +186,8 @@ if __name__ == '__main__':
 
     output_layer = FullyConnectedLayer(input_dim=layer_3_input_dim,
                                        output_dim=layer_3_output_dim,
-                                       activation=CrossEntropyLoss(),
+                                       # activation=CrossEntropyLoss(),
+                                       activation=None,  # todo
                                        include_intercept=False)
 
     layers = [input_layer, hidden_layer_1, hidden_layer_2, output_layer]
@@ -170,7 +200,6 @@ if __name__ == '__main__':
 
     # Fit network to data:
     nn.fit(train_X, train_y)
-
 
     raise NotImplementedError()
 
