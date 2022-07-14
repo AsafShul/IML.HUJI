@@ -172,25 +172,25 @@ if __name__ == '__main__':
     input_layer = FullyConnectedLayer(input_dim=layer_0_input_dim,
                                       output_dim=layer_0_output_dim,
                                       activation=ReLU(),  # todo
-                                      include_intercept=False)
+                                      include_intercept=False)  # todo True
 
     hidden_layer_1 = FullyConnectedLayer(input_dim=layer_1_input_dim,
                                          output_dim=layer_1_output_dim,
                                          activation=ReLU(),
-                                         include_intercept=True)
+                                         include_intercept=False)  # todo True
 
-    hidden_layer_2 = FullyConnectedLayer(input_dim=layer_2_input_dim,
-                                         output_dim=layer_2_output_dim,
-                                         activation=ReLU(),
-                                         include_intercept=True)
+    # hidden_layer_2 = FullyConnectedLayer(input_dim=layer_2_input_dim,
+    #                                      output_dim=layer_2_output_dim,
+    #                                      activation=ReLU(),
+    #                                      include_intercept=True)
 
     output_layer = FullyConnectedLayer(input_dim=layer_3_input_dim,
                                        output_dim=layer_3_output_dim,
-                                       # activation=CrossEntropyLoss(),
-                                       activation=None,  # todo
-                                       include_intercept=False)
+                                       activation=ReLU(),
+                                       include_intercept=False)  # todo True
 
-    layers = [input_layer, hidden_layer_1, hidden_layer_2, output_layer]
+    # layers = [input_layer, hidden_layer_1, hidden_layer_2, output_layer]
+    layers = [input_layer, hidden_layer_1, output_layer]
 
     gd_solver = GradientDescent(learning_rate=FixedLR(0.1), max_iter=5000)
 

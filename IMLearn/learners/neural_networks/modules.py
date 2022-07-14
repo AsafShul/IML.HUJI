@@ -238,12 +238,26 @@ class CrossEntropyLoss(BaseModule):
         output: ndarray of shape (n_samples, input_dim)
             derivative of cross-entropy loss with respect to given input
         """
-        # one_hot_y = np.eye(np.max(y) + 1)[y]
-        y_pred = np.argmax(softmax(X), axis=1)
-        # S = -(np.log(softmax_X) @ one_hot_y.T)
-        # return np.diag(S) - S @ softmax_X.T
+        one_hot_y = np.eye(np.max(y) + 1)[y]
+        return np.sum(one_hot_y - softmax(X), axis=1) # todo sum????????
 
-        return -(y / y_pred).T
+
+
+
+        #
+        # # one_hot_y = np.eye(np.max(y) + 1)[y]
+        # y_pred = np.argmax(softmax(X), axis=1)
+        # # S = -(np.log(softmax_X) @ one_hot_y.T)
+        # # return np.diag(S) - S @ softmax_X.T
+        #
+        # return -(y / y_pred).T
+        #
+        #
+        #
+        #
+        #
+
+
         #
         #
         #

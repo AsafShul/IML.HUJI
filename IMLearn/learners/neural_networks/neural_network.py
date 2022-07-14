@@ -181,10 +181,10 @@ class NeuralNetwork(BaseEstimator, BaseModule):
             delta_t_plus_1 = delta[-1]
 
             j_at = layer.compute_jacobian(X=self.post_activations_[idx + 1], y=y)
-            delta_j_at = delta_t_plus_1 @ j_at
+            delta_j_at = j_at.T @ delta_t_plus_1 # 1 -> 3x3 or 1200x1200,
 
-            delta_t = delta_j_at @ layer.weights
-            partial_derivative_t = delta_j_at @ self.pre_activations_[idx + 1]
+            delta_t = (delta_j_at @ layer.weights.T).T  # maybe transpose
+            partial_derivative_t = delta_j_at @ self.pre_activations_[idx + 1].T
 
             delta.append(delta_t)
             partial_derivatives.append(partial_derivative_t)
