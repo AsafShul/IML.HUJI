@@ -1,7 +1,7 @@
 import numpy as np
 from IMLearn.base.base_module import BaseModule
 from IMLearn.metrics.loss_functions import cross_entropy, softmax
-
+import pandas as pd
 
 def linear_activation(X: np.ndarray) -> np.ndarray: # todo module class?
     """
@@ -55,6 +55,7 @@ class FullyConnectedLayer(BaseModule):
         ------
         Weights are randomly initialized following N(0, 1/input_dim)
         """
+
         super().__init__()
         # todo:
         # self.input_dim_ = input_dim if not include_intercept else input_dim + 1
@@ -65,16 +66,12 @@ class FullyConnectedLayer(BaseModule):
         self.activation_ = activation
         self.include_intercept_ = include_intercept
 
-        weights_dim = (input_dim, output_dim) if not include_intercept else (input_dim + 1, output_dim)
+        weights_dim = (input_dim, output_dim) if not include_intercept else (
+        input_dim + 1, output_dim)
 
-        self.weights = np.random.randn(*weights_dim) / np.sqrt(self.input_dim_) # todo + 1?
-        # self.weights = np.random.randn(self.input_dim_, self.output_dim_) / np.sqrt(self.input_dim_)
-
-        # todo theres a problem, overrides !
-        # self.weights = np.random.normal(0, 1/input_dim, (input_dim + 1 if include_intercept else input_dim, output_dim))
-
-
-        # self.bias = (np.random.randn(self.output_dim_) / np.sqrt(self.input_dim_)) if include_intercept else np.zeros(self.output_dim_)
+        # self.weights = np.random.randn(*weights_dim) / np.sqrt(self.input_dim_)
+        # set weights to Normal(0, 1/input_dim)
+        self.weights = np.random.normal(0, 1 / input_dim, weights_dim)
 
         # bias is the first column of weights, one bias per output neuron
 
@@ -83,7 +80,7 @@ class FullyConnectedLayer(BaseModule):
     # todo
     # def compute_output(self, X: np.ndarray, **kwargs) -> np.ndarray:
     # def compute_output(self, X: np.ndarray, no_activation: bool=False, **kwargs) -> np.ndarray:
-    def compute_output(self, X: np.ndarray, pre_activations, post_activations, no_activation: bool=False, **kwargs) -> np.ndarray:
+    def compute_output(self, X: np.ndarray, pre_activations, post_activations, **kwargs) -> np.ndarray:
         """
         Compute activation(weights @ x) for every sample x: output value of layer at point
         self.weights and given input
@@ -97,14 +94,32 @@ class FullyConnectedLayer(BaseModule):
         --------
         output: ndarray of shape (n_samples, output_dim)
             Value of function at point self.weights
+
+        Returns
+        -------
+        object
         """
+
+        # if self.include_intercept_:
+        #     X = np.c_[np.ones(X.shape[0]), X]
+        # w_X = X @ self.weights
+        #
+        # if kwargs.get("pre_active"):
+        #     kwargs["pre_active"][0] = w_X
+        #
+        # if self.activation_:
+        #     return self.activation_.compute_output(w_X)
+        # return w_X
+
+
+
         m = X.shape[0]
 
         if self.include_intercept_:
             X = np.c_[np.ones(m), X]
 
         z = X @ self.weights  # todo reverse?
-        a = self.activation_.compute_output(X=z, **kwargs) if self.activation_ is not None else z
+        a = self.activation_.compute_output(X=z, **kwargs) if not self.activation_ else z
 
         pre_activations.append(z)
         post_activations.append(a)
@@ -125,23 +140,37 @@ class FullyConnectedLayer(BaseModule):
         output: ndarray of shape (input_dim, n_samples)
             Derivative with respect to self.weights at point self.weights
         """
-        # todo intercept?, X.T?
-        m = X.shape[0]
 
-        if self.include_intercept_:
-            X = np.c_[np.ones(m), X]
+        if self.activation_:
+            return self.activation_.compute_jacobian(X=X)
+        return np.ones(X.shape)
 
-        # z = self.weights @ X.T
-        # z_ = X @ self.weights
 
-        # TODO !!!
+        # z = X @ self.weights.T
+        # # dz = self.activation_.compute_jacobian(X=z, **kwargs) if self.activation_ is not None else np.eye(X.shape[0])
+        # dz = self.activation_.compute_jacobian(X=z, **kwargs) if self.activation_ is not None else z
+        # # dz = self.activation_.compute_jacobian(X=z, **kwargs) if self.activation_ is not None else X
+        # dw = X.T @ dz
+        # # dw = dz @ X.T
+        # return dw
 
-        # z_ = X.T @ self.weights
-
-        # return self.activation_.compute_jacobian(X=z_, **kwargs) @ X
-        # return X.T @ self.activation_.compute_jacobian(X=z_, **kwargs)
-        # return self.activation_.compute_jacobian(X=z, **kwargs) if self.activation_ is not None else np.eye(m)
-        return self.activation_.compute_jacobian(X=X, **kwargs) if self.activation_ is not None else np.eye(m)
+        # # todo intercept?, X.T?
+        # m = X.shape[0]
+        #
+        # if self.include_intercept_:
+        #     X = np.c_[np.ones(m), X]
+        #
+        # # z = self.weights @ X.T
+        # # z_ = X @ self.weights
+        #
+        # # TODO !!!
+        #
+        # # z_ = X.T @ self.weights
+        #
+        # # return self.activation_.compute_jacobian(X=z_, **kwargs) @ X
+        # # return X.T @ self.activation_.compute_jacobian(X=z_, **kwargs)
+        # # return self.activation_.compute_jacobian(X=z, **kwargs) if self.activation_ is not None else np.eye(m)
+        # return self.activation_.compute_jacobian(X=X, **kwargs) if self.activation_ is not None else np.eye(m)
 
 
 class ReLU(BaseModule):
@@ -182,7 +211,8 @@ class ReLU(BaseModule):
         output: ndarray of shape (n_samples,)
             Element-wise derivative of ReLU with respect to given data
         """
-        return np.where(X > 0, 1, 0)
+        return np.greater(X, 0).astype(int)
+        # return np.where(X > 0, 1, 0)
 
 
 class CrossEntropyLoss(BaseModule):
@@ -209,17 +239,28 @@ class CrossEntropyLoss(BaseModule):
             cross-entropy loss value of given X and y
         """
 
-        one_hot_y = np.eye(np.max(y) + 1)[y]
-        softmax_X = softmax(X)
-        return -np.diag((np.log(softmax_X) @ one_hot_y.T))
+        # one_hot_y = np.eye(np.max(y) + 1)[y]
+        # softmax_X = softmax(X)
+        # # check if softmax_X is flat
+        # if softmax_X.ndim == 1:
+        #     return -np.sum(one_hot_y * np.log(softmax_X))
+        #
+        # res = -np.sum(one_hot_y * np.log(softmax_X), axis=1)
+        # return res
 
+        return cross_entropy(pd.get_dummies(y).to_numpy(), softmax(X))
 
+        # one_hot_y = np.eye(np.max(y) + 1)[y]
+        # softmax_X = softmax(X)
+        # return -np.diag((np.log(softmax_X) @ one_hot_y.T))
         #
         #
-        # return cross_entropy(softmax_X, one_hot_y)
-
-        # y_pred = np.apply_along_axis(softmax, 1, X)
-        # return np.apply_along_axis(cross_entropy, 1, y, y_pred)
+        # #
+        # #
+        # # return cross_entropy(softmax_X, one_hot_y)
+        #
+        # # y_pred = np.apply_along_axis(softmax, 1, X)
+        # # return np.apply_along_axis(cross_entropy, 1, y, y_pred)
 
     def compute_jacobian(self, X: np.ndarray, y: np.ndarray, **kwargs) -> np.ndarray:
         """
@@ -238,37 +279,48 @@ class CrossEntropyLoss(BaseModule):
         output: ndarray of shape (n_samples, input_dim)
             derivative of cross-entropy loss with respect to given input
         """
-        one_hot_y = np.eye(np.max(y) + 1)[y]
-        return np.sum(one_hot_y - softmax(X), axis=1) # todo sum????????
 
+        return softmax(X) - pd.get_dummies(y).to_numpy()
 
-
-
+        # one_hot_y = np.eye(np.max(y) + 1)[y]
+        # softmax_X = softmax(X)
         #
-        # # one_hot_y = np.eye(np.max(y) + 1)[y]
-        # y_pred = np.argmax(softmax(X), axis=1)
-        # # S = -(np.log(softmax_X) @ one_hot_y.T)
-        # # return np.diag(S) - S @ softmax_X.T
-        #
-        # return -(y / y_pred).T
-        #
-        #
-        #
-        #
-        #
-
+        # res = softmax_X - one_hot_y  # todo ooooooooooooooooooooooooooooooooo!!!!!!!!!!!!!!
+        # # res = np.argmax(softmax_X, axis=1) - y
+        # return res
 
         #
+        # one_hot_y = np.eye(np.max(y) + 1)[y]
+        # return np.sum(one_hot_y - softmax(X), axis=1) # todo sum????????
         #
         #
         #
-        # # todo make sure !
-        # X_softmax = softmax(X)
-        # X_softmax_diag = np.diag(X_softmax)
-        # softmax_jacobian_diag = X_softmax_diag * (1 - X_softmax_diag)
         #
-        # softmax_jacobian = X_softmax @ X_softmax.T
-        # np.fill_diagonal(softmax_jacobian, softmax_jacobian_diag)
+        # #
+        # # # one_hot_y = np.eye(np.max(y) + 1)[y]
+        # # y_pred = np.argmax(softmax(X), axis=1)
+        # # # S = -(np.log(softmax_X) @ one_hot_y.T)
+        # # # return np.diag(S) - S @ softmax_X.T
+        # #
+        # # return -(y / y_pred).T
+        # #
+        # #
+        # #
+        # #
+        # #
         #
-        # return softmax_jacobian
-
+        #
+        # #
+        # #
+        # #
+        # #
+        # # # todo make sure !
+        # # X_softmax = softmax(X)
+        # # X_softmax_diag = np.diag(X_softmax)
+        # # softmax_jacobian_diag = X_softmax_diag * (1 - X_softmax_diag)
+        # #
+        # # softmax_jacobian = X_softmax @ X_softmax.T
+        # # np.fill_diagonal(softmax_jacobian, softmax_jacobian_diag)
+        # #
+        # # return softmax_jacobian
+        #

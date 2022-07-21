@@ -121,45 +121,75 @@ class GradientDescent:
                 Euclidean norm of w^(t)-w^(t-1)
 
         """
-        total_weights = f.weights
-        best_weights = f.weights
 
-        lowest_delta = np.inf
-
+        best_weight = f.weights
+        best_weight_score = f.compute_output(X=X, y=y)
+        sum_weights = np.zeros(f.weights.shape)
+        n = 0
         for t in range(self.max_iter_):
-            # calculate current iteration's values:
-            val = f.compute_output(X=X, y=y)
+            n += 1
+            prev_weight = f.weights
             eta = self.learning_rate_.lr_step(t=t)
             grad = f.compute_jacobian(X=X, y=y)
+            f.weights = f.weights - eta * grad / np.linalg.norm(grad)
 
-            prev_wights = f.weights.copy()
-            f.weights = f.weights - eta * grad
+            sum_weights += f.weights
+            current_output = f.compute_output(X=X, y=y)
+            if current_output < best_weight_score:
+                best_weight = f.weights
+                best_weight_score = current_output
 
-            delta = np.linalg.norm(f.weights - prev_wights)
-
-            # update weights for output type:
-            total_weights += f.weights
-            # if lowest_val > val:
-            if lowest_delta > delta:
-                best_weights = f.weights
-                lowest_delta = delta
-
-            # call callback function:
-            self.callback_(self,
-                           weights=f.weights,
-                           val=val,
-                           grad=grad,
-                           t=t,
-                           eta=eta,
-                           delta=delta)
-
-            # check for stopping condition:
-            if delta < self.tol_:
+            delta = np.linalg.norm(f.weights - prev_weight, ord=2)
+            if np.linalg.norm(f.weights - prev_weight, ord=2) < self.tol_:
                 break
-
+            self.callback_(solver=self, weights=f.weights, val=current_output,
+                           grad=grad, t=t, eta=eta, delta=delta)
         if self.out_type_ == "best":
-            f.weights = best_weights
-        elif self.out_type_ == "average":
-            f.weights = np.mean(total_weights, axis=0)
-
-        return f.weights
+            return best_weight
+        elif self.out_type_ == "last":
+            return f.weights
+        else:
+            return sum_weights / n
+        #
+        # total_weights = f.weights
+        # best_weights = f.weights
+        #
+        # lowest_delta = np.inf
+        #
+        # for t in range(self.max_iter_):
+        #     # calculate current iteration's values:
+        #     val = f.compute_output(X=X, y=y)
+        #     eta = self.learning_rate_.lr_step(t=t)
+        #     grad = f.compute_jacobian(X=X, y=y)
+        #
+        #     prev_wights = f.weights.copy()
+        #     f.weights = f.weights - eta * grad
+        #
+        #     delta = np.linalg.norm(f.weights - prev_wights)
+        #
+        #     # update weights for output type:
+        #     total_weights += f.weights
+        #     # if lowest_val > val:
+        #     if lowest_delta > delta:
+        #         best_weights = f.weights
+        #         lowest_delta = delta
+        #
+        #     # call callback function:
+        #     self.callback_(model=self,
+        #                    weights=f.weights,
+        #                    val=val,
+        #                    grad=grad,
+        #                    t=t,
+        #                    eta=eta,
+        #                    delta=delta)
+        #
+        #     # check for stopping condition:
+        #     if delta < self.tol_:
+        #         break
+        #
+        # if self.out_type_ == "best":
+        #     f.weights = best_weights
+        # elif self.out_type_ == "average":
+        #     f.weights = np.mean(total_weights, axis=0)
+        #
+        # return f.weights

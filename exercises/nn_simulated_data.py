@@ -97,9 +97,9 @@ def animate_decision_boundary(nn: NeuralNetwork, weights: List[np.ndarray],
             go.Scatter(x=X[:, 0], y=X[:, 1], mode="markers",
                        marker=dict(color=y, colorscale=custom,
                                    line=dict(color="black", width=1)))
-            ],
-                               layout=go.Layout(
-                                   title=rf"$\text{{{title} Iteration {i + 1}}}$")))
+        ],
+            layout=go.Layout(
+                title=rf"$\text{{{title} Iteration {i + 1}}}$")))
 
     fig = go.Figure(data=frames[0]["data"], frames=frames[1:],
                     layout=go.Layout(title=frames[0]["layout"]["title"]))
@@ -133,7 +133,6 @@ if __name__ == '__main__':
     # Question 1: Fitting simple network with two hidden layers                                    #
     # ---------------------------------------------------------------------------------------------#
 
-
     """
     a0 := (m, d)  = (1200, 2)
     
@@ -146,11 +145,7 @@ if __name__ == '__main__':
     b2 := (1, l2_neurons) = (1, 16)
     z2 := (m, l2_neurons) = (1200, 16)
     a2 := (m, l2_neurons) = (1200, 16)
-    
-    w3 := (l2_neurons, l3_neurons) = (17, 16)
-    b3 := (1, l3_neurons) = (1, 16)
-    z3 := (m, l3_neurons) = (1200, 16)
-    a3 := (m, l3_neurons) = (1200, 16)    
+     
     
     w4 := (l3_neurons, n_classes) = (16, 3)
     b4 := (1, n_classes) = (0, 3)
@@ -162,7 +157,7 @@ if __name__ == '__main__':
     
     """
 
-    # Create simple network:  # todo here?
+    # Create simple network:
     layer_0_input_dim = n_features
     layer_0_output_dim = layer_1_input_dim = 16
     layer_1_output_dim = layer_2_input_dim = 16
@@ -171,28 +166,30 @@ if __name__ == '__main__':
 
     input_layer = FullyConnectedLayer(input_dim=layer_0_input_dim,
                                       output_dim=layer_0_output_dim,
-                                      activation=ReLU(),  # todo
-                                      include_intercept=False)  # todo True
+                                      activation=ReLU(),
+                                      include_intercept=True)
 
     hidden_layer_1 = FullyConnectedLayer(input_dim=layer_1_input_dim,
                                          output_dim=layer_1_output_dim,
                                          activation=ReLU(),
-                                         include_intercept=False)  # todo True
-
-    # hidden_layer_2 = FullyConnectedLayer(input_dim=layer_2_input_dim,
-    #                                      output_dim=layer_2_output_dim,
-    #                                      activation=ReLU(),
-    #                                      include_intercept=True)
+                                         include_intercept=True)
 
     output_layer = FullyConnectedLayer(input_dim=layer_3_input_dim,
                                        output_dim=layer_3_output_dim,
                                        activation=ReLU(),
-                                       include_intercept=False)  # todo True
+                                       include_intercept=True)
 
-    # layers = [input_layer, hidden_layer_1, hidden_layer_2, output_layer]
     layers = [input_layer, hidden_layer_1, output_layer]
 
-    gd_solver = GradientDescent(learning_rate=FixedLR(0.1), max_iter=5000)
+    # q3_vals = []
+    # q3_grads = []
+    #
+    # def callback_q3(**kwargs):
+    #     q3_vals.append(kwargs["val"])
+    #     q3_grads.append(np.linalg.norm(kwargs["weights"]))
+
+    gd_solver = GradientDescent(learning_rate=FixedLR(0.1),
+                                max_iter=5000)  # , callback=callback_q3)
 
     nn = NeuralNetwork(modules=layers,
                        loss_fn=CrossEntropyLoss(),  # todo?
@@ -201,14 +198,76 @@ if __name__ == '__main__':
     # Fit network to data:
     nn.fit(train_X, train_y)
 
-    raise NotImplementedError()
+    print(
+        f'NN [2x16x16x3] accuracy: {round(accuracy(nn.predict(test_X), test_y) * 100, 3)}%')
 
     # ---------------------------------------------------------------------------------------------#
     # Question 2: Fitting a network with no hidden layers                                          #
     # ---------------------------------------------------------------------------------------------#
-    raise NotImplementedError()
+
+    layers_q2 = [FullyConnectedLayer(input_dim=n_features,
+                                     output_dim=n_classes,
+                                     activation=ReLU(),
+                                     include_intercept=False)]  # todo True?
+
+    nn_q2 = NeuralNetwork(modules=layers_q2,
+                          loss_fn=CrossEntropyLoss(),
+                          solver=GradientDescent(learning_rate=FixedLR(0.1),
+                                                 max_iter=5000))
+
+    nn_q2.fit(train_X, train_y)
+    print(f'NN [2x3] accuracy: {round(accuracy(nn_q2.predict(test_X), test_y) * 100, 3)}%')
 
     # ---------------------------------------------------------------------------------------------#
     # Question 3+4: Plotting network convergence process                                           #
     # ---------------------------------------------------------------------------------------------#
-    raise NotImplementedError()
+
+    # nn.gradient_descent_.callback_ = lambda **kwargs: print(kwargs['model'].loss())
+    # animate_decision_boundary(nn, [layer.weights for layer in nn.modules_],
+    #                           lims, test_X, test_y,
+    #                           save_name="../figures/q3_decision_boundary.gif")
+
+    fig = plot_decision_boundary(nn, lims, test_X, test_y,
+                                 title="Q3. [2x16x16x3]")
+    fig.show()
+
+    # ---------------------------------------------------------------------------------------------#
+    # Create simple network:
+    q4_layer_0_input_dim = n_features
+    q4_layer_0_output_dim = q4_layer_1_input_dim = 6
+    q4_layer_1_output_dim = q4_layer_2_input_dim = 6
+    q4_layer_2_output_dim = q4_layer_3_input_dim = 6
+    q4_layer_3_output_dim = n_classes
+
+    q4_input_layer = FullyConnectedLayer(input_dim=q4_layer_0_input_dim,
+                                         output_dim=q4_layer_0_output_dim,
+                                         activation=ReLU(),
+                                         include_intercept=True)
+
+    q4_hidden_layer_1 = FullyConnectedLayer(input_dim=q4_layer_1_input_dim,
+                                            output_dim=q4_layer_1_output_dim,
+                                            activation=ReLU(),
+                                            include_intercept=True)
+
+    q4_output_layer = FullyConnectedLayer(input_dim=q4_layer_3_input_dim,
+                                          output_dim=q4_layer_3_output_dim,
+                                          activation=ReLU(),
+                                          include_intercept=True)
+
+    q4_layers = [q4_input_layer, q4_hidden_layer_1, q4_output_layer]
+
+    q4_gd_solver = GradientDescent(learning_rate=FixedLR(0.1), max_iter=5000)
+
+    q4_nn = NeuralNetwork(modules=q4_layers,
+                          loss_fn=CrossEntropyLoss(),  # todo?
+                          solver=q4_gd_solver)
+
+    # Fit network to data:
+    q4_nn.fit(train_X, train_y)
+
+    print(
+        f'NN [2x16x16x3] accuracy: {round(accuracy(q4_nn.predict(test_X), test_y) * 100, 3)}%')
+
+    fig = plot_decision_boundary(q4_nn, lims, test_X, test_y,
+                                 title="Q4 [2x6x6x3]")
+    fig.show()
