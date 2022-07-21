@@ -67,7 +67,6 @@ class NeuralNetwork(BaseEstimator, BaseModule):
         responses : ndarray of shape (n_samples, )
             Predicted labels of given samples
         """
-        # return self.compute_prediction(X)
         return np.argmax(self.compute_prediction(X), axis=1)
 
 
@@ -88,7 +87,6 @@ class NeuralNetwork(BaseEstimator, BaseModule):
         loss : float
             Performance under specified loss function
         """
-        # todo, maybe dont save the pre and post activations
 
         return self.loss_function_.compute_output(X=self.compute_prediction(X), y=y)
 
@@ -117,8 +115,6 @@ class NeuralNetwork(BaseEstimator, BaseModule):
         -----
         Function stores all intermediate values in the `self.pre_activations_` and `self.post_activations_` arrays
         """
-
-        # return self.loss_function_.compute_output(X=self.compute_prediction(X), y=y)
 
         self.post_activations_ = []
         self.pre_activations_ = []
@@ -157,22 +153,6 @@ class NeuralNetwork(BaseEstimator, BaseModule):
                                         post_activations=self.post_activations_)
         return pred
 
-        # # initialize pre and post activations:
-        # self.pre_activations_ = []
-        # self.post_activations_ = []
-        #
-        # A_curr = X
-        # self.post_activations_.append(X)
-        # self.pre_activations_.append(X)
-        #
-        # for layer in self.modules_:
-        #     A_prev = A_curr
-        #
-        #     A_curr = layer.compute_output(X=A_prev,
-        #                                   pre_activations=self.pre_activations_,
-        #                                   post_activations=self.post_activations_)
-        #
-        # return A_curr
 
     def compute_jacobian(self, X: np.ndarray, y: np.ndarray,
                          **kwargs) -> np.ndarray:
@@ -221,94 +201,6 @@ class NeuralNetwork(BaseEstimator, BaseModule):
 
         return self._flatten_parameters(reversed(partial_derivatives))
 
-
-
-
-
-
-
-
-
-        # last = self.post_activations_[-1]
-        # delta = self.loss_function_.compute_jacobian(X=last, y=y)
-        # partial_derivatives = []
-        #
-        # # back
-        # for i in range(len(self.modules_)):
-        #     layer = self.modules_[len(self.modules_) - i - 1]
-        #     activation = self.post_activations_[len(self.modules_) - i - 1]
-        #     w_t = layer.weights.T
-        #
-        #     if layer.include_intercept_:
-        #         w_t = np.delete(w_t, 0, axis=1)
-        #         activation = np.c_[np.ones(activation.shape[0]), activation]
-        #
-        #     inp = self.pre_activations_[len(self.modules_) - i - 1]
-        #     t = layer.compute_jacobian(X=inp) * delta
-        #     delta = t @ w_t
-        #     partial_derivatives.append((t.T @ activation).T)
-        #
-        # return self._flatten_parameters(reversed(partial_derivatives))
-
-
-
-
-
-
-
-
-        # partial_derivatives = [np.zeros(m.weights.shape) for m in self.modules_]
-        #
-        # delta = self.loss_function_.compute_jacobian(
-        #     X=self.post_activations_[-1], y=y).reshape(-1, 1) * \
-        #     self.modules_[-1].activation_.compute_jacobian(X=self.pre_activations_[-1])
-        #
-        # partial_derivatives[-1] = delta.T @ self.post_activations_[-2] # todo maybe transpose
-        #
-        # for l in range(2, len(self.modules_)):
-        #     z = self.pre_activations_[-l]
-        #     sp = self.modules_[-l].activation_.compute_jacobian(X=z)
-        #     delta = (self.modules_[-l + 1].weights @ delta.T).T * sp
-        #
-        #     partial_derivatives[-l] = delta.T @ self.post_activations_[-l - 1]
-        #
-        # return self._flatten_parameters(partial_derivatives)
-
-
-
-
-
-
-
-
-
-
-
-
-
-        # delta = []
-        # partial_derivatives = []
-        #
-        # delta.append(self.loss_function_.compute_jacobian(X=self.post_activations_[-1], y=y))
-        #
-        # for idx, layer in reversed(list(enumerate(self.modules_))):
-        #     delta_t_plus_1 = delta[-1]
-        #
-        #     j_at = layer.compute_jacobian(X=self.post_activations_[idx + 1], y=y)
-        #     # delta_j_at = j_at.T @ delta_t_plus_1 # 1 -> 3x3 or 1200x1200,
-        #
-        #     # delta_j_at = delta_t_plus_1 @ j_at   # 1 -> 3x3 or 1200x1200,
-        #     delta_j_at = delta_t_plus_1 * j_at   # 1 -> 3x3 or 1200x1200,
-        #
-        #     # delta_t = (delta_j_at @ layer.weights.T).T  # maybe transpose
-        #     delta_t = delta_j_at @ layer.weights
-        #     # partial_derivative_t = delta_j_at @ self.pre_activations_[idx + 1].T
-        #     partial_derivative_t = delta_j_at.T @ self.pre_activations_[idx + 1]  # maybe transpose
-        #
-        #     delta.append(delta_t)
-        #     partial_derivatives.append(partial_derivative_t)
-        #
-        # return self._flatten_parameters(partial_derivatives)
 
     @property
     def weights(self) -> np.ndarray:

@@ -98,55 +98,55 @@ if __name__ == '__main__':
     # ---------------------------------------------------------------------------------------------#
     # Initialize, fit and test network
     # Create simple network:
-    # hidden_layer_size = 64
-    #
-    # input_layer = FullyConnectedLayer(input_dim=n_features,
-    #                                   output_dim=hidden_layer_size,
-    #                                   activation=ReLU(),
-    #                                   include_intercept=True)
-    #
-    # mid_layer = FullyConnectedLayer(input_dim=hidden_layer_size,
-    #                                 output_dim=hidden_layer_size,
-    #                                 activation=ReLU(),
-    #                                 include_intercept=True)
-    #
-    # output_layer = FullyConnectedLayer(input_dim=hidden_layer_size,
-    #                                    output_dim=n_classes,
-    #                                    activation=ReLU(),
-    #                                    include_intercept=True)
-    #
-    # layers = [input_layer, mid_layer, output_layer]
-    #
-    # from exercises.gradient_descent_investigation import \
-    #     get_gd_state_recorder_callback
-    #
-    # callback, values, weights = get_gd_state_recorder_callback()
-    #
-    # gd_solver = GradientDescent(learning_rate=FixedLR(0.1), max_iter=100,
-    #                             callback=callback)
-    #
-    # nn = NeuralNetwork(modules=layers, loss_fn=CrossEntropyLoss(),
-    #                    solver=gd_solver)
-    #
-    # # Fit network to data:
-    # nn.fit(train_X, train_y)
-    #
-    # print(
-    #     f'MNST NN [2x64x64x3] accuracy: {round(accuracy(nn.predict(test_X), test_y) * 100, 3)}%')
-    #
-    # # Plotting convergence process
-    # px.line(x=list(range(len(values))), y=values).show()
-    #
-    # # Plotting test true- vs predicted confusion matrix
-    # from sklearn.metrics import confusion_matrix
-    #
-    # cm = confusion_matrix(test_y, nn.predict(test_X))
-    # fig = px.imshow(cm, color_continuous_scale="Viridis")
-    # fig.update_layout(title="MNIST NN [2x64x64x3] confusion matrix",
-    #                   font=dict(size=16), coloraxis_showscale=False)
-    # fig.update_xaxes(showticklabels=False)
-    # fig.update_yaxes(showticklabels=False)
-    # fig.show()
+    hidden_layer_size = 64
+
+    input_layer = FullyConnectedLayer(input_dim=n_features,
+                                      output_dim=hidden_layer_size,
+                                      activation=ReLU(),
+                                      include_intercept=True)
+
+    mid_layer = FullyConnectedLayer(input_dim=hidden_layer_size,
+                                    output_dim=hidden_layer_size,
+                                    activation=ReLU(),
+                                    include_intercept=True)
+
+    output_layer = FullyConnectedLayer(input_dim=hidden_layer_size,
+                                       output_dim=n_classes,
+                                       activation=ReLU(),
+                                       include_intercept=True)
+
+    layers = [input_layer, mid_layer, output_layer]
+
+    from exercises.gradient_descent_investigation import \
+        get_gd_state_recorder_callback
+
+    callback, values, weights = get_gd_state_recorder_callback()
+
+    gd_solver = GradientDescent(learning_rate=FixedLR(0.1), max_iter=1000,
+                                callback=callback)
+
+    nn = NeuralNetwork(modules=layers, loss_fn=CrossEntropyLoss(),
+                       solver=gd_solver)
+
+    # Fit network to data:
+    nn.fit(train_X, train_y)
+
+    print(
+        f'MNST NN [2x64x64x3] accuracy: {round(accuracy(nn.predict(test_X), test_y) * 100, 3)}%')
+
+    # Plotting convergence process
+    px.line(x=list(range(len(values))), y=values).show()
+
+    # Plotting test true- vs predicted confusion matrix
+    from sklearn.metrics import confusion_matrix
+
+    cm = confusion_matrix(test_y, nn.predict(test_X))
+    fig = px.imshow(cm, color_continuous_scale="Viridis")
+    fig.update_layout(title="MNIST NN [2x64x64x3] confusion matrix",
+                      font=dict(size=16), coloraxis_showscale=False)
+    fig.update_xaxes(showticklabels=False)
+    fig.update_yaxes(showticklabels=False)
+    fig.show()
 
     # ---------------------------------------------------------------------------------------------#
     # Question 8: Network without hidden layers using SGD                                          #
@@ -158,7 +158,7 @@ if __name__ == '__main__':
 
 
 
-    gd_solver_2 = GradientDescent(learning_rate=FixedLR(0.1), max_iter=100)
+    gd_solver_2 = GradientDescent(learning_rate=FixedLR(0.1), max_iter=1000)
 
     simple_nn = NeuralNetwork(modules=simple_layers, loss_fn=CrossEntropyLoss(),
                                 solver=gd_solver_2)

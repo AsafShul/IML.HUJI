@@ -134,6 +134,8 @@ if __name__ == '__main__':
     # ---------------------------------------------------------------------------------------------#
 
     """
+    dimensions bookkeeping:
+    
     a0 := (m, d)  = (1200, 2)
     
     w1 := (d, l1_neurons) = (2, 16)
@@ -153,17 +155,15 @@ if __name__ == '__main__':
     a4 := (m, 1) = (1200, 1)
     
     c := (m, 1) = (1200, 1)
-    
-    
     """
 
-    # Create simple network:
+    # set up networks dimensions:
     layer_0_input_dim = n_features
     layer_0_output_dim = layer_1_input_dim = 16
     layer_1_output_dim = layer_2_input_dim = 16
-    layer_2_output_dim = layer_3_input_dim = 16
-    layer_3_output_dim = n_classes
+    layer_2_output_dim = n_classes
 
+    # Construct the network:
     input_layer = FullyConnectedLayer(input_dim=layer_0_input_dim,
                                       output_dim=layer_0_output_dim,
                                       activation=ReLU(),
@@ -174,70 +174,59 @@ if __name__ == '__main__':
                                          activation=ReLU(),
                                          include_intercept=True)
 
-    output_layer = FullyConnectedLayer(input_dim=layer_3_input_dim,
-                                       output_dim=layer_3_output_dim,
+    output_layer = FullyConnectedLayer(input_dim=layer_2_input_dim,
+                                       output_dim=layer_2_output_dim,
                                        activation=ReLU(),
                                        include_intercept=True)
 
     layers = [input_layer, hidden_layer_1, output_layer]
 
-    # q3_vals = []
-    # q3_grads = []
-    #
-    # def callback_q3(**kwargs):
-    #     q3_vals.append(kwargs["val"])
-    #     q3_grads.append(np.linalg.norm(kwargs["weights"]))
-
-    gd_solver = GradientDescent(learning_rate=FixedLR(0.1),
-                                max_iter=5000)  # , callback=callback_q3)
+    gd_solver = GradientDescent(learning_rate=FixedLR(0.1), max_iter=5000)
 
     nn = NeuralNetwork(modules=layers,
-                       loss_fn=CrossEntropyLoss(),  # todo?
+                       loss_fn=CrossEntropyLoss(),
                        solver=gd_solver)
 
     # Fit network to data:
     nn.fit(train_X, train_y)
 
-    print(
-        f'NN [2x16x16x3] accuracy: {round(accuracy(nn.predict(test_X), test_y) * 100, 3)}%')
+    # print accuracy on test data:
+    print(f'NN [2x16x16x3] accuracy: {round(accuracy(nn.predict(test_X), test_y) * 100, 3)}%')
 
     # ---------------------------------------------------------------------------------------------#
     # Question 2: Fitting a network with no hidden layers                                          #
     # ---------------------------------------------------------------------------------------------#
-
+    # construct the simple network
     layers_q2 = [FullyConnectedLayer(input_dim=n_features,
                                      output_dim=n_classes,
                                      activation=ReLU(),
-                                     include_intercept=False)]  # todo True?
+                                     include_intercept=False)]
 
     nn_q2 = NeuralNetwork(modules=layers_q2,
                           loss_fn=CrossEntropyLoss(),
                           solver=GradientDescent(learning_rate=FixedLR(0.1),
                                                  max_iter=5000))
 
+    # fit the network
     nn_q2.fit(train_X, train_y)
+
+    # print accuracy on test data
     print(f'NN [2x3] accuracy: {round(accuracy(nn_q2.predict(test_X), test_y) * 100, 3)}%')
 
     # ---------------------------------------------------------------------------------------------#
     # Question 3+4: Plotting network convergence process                                           #
     # ---------------------------------------------------------------------------------------------#
 
-    # nn.gradient_descent_.callback_ = lambda **kwargs: print(kwargs['model'].loss())
-    # animate_decision_boundary(nn, [layer.weights for layer in nn.modules_],
-    #                           lims, test_X, test_y,
-    #                           save_name="../figures/q3_decision_boundary.gif")
-
     fig = plot_decision_boundary(nn, lims, test_X, test_y,
                                  title="Q3. [2x16x16x3]")
     fig.show()
 
     # ---------------------------------------------------------------------------------------------#
-    # Create simple network:
+    # Create simpler network:
     q4_layer_0_input_dim = n_features
     q4_layer_0_output_dim = q4_layer_1_input_dim = 6
     q4_layer_1_output_dim = q4_layer_2_input_dim = 6
-    q4_layer_2_output_dim = q4_layer_3_input_dim = 6
-    q4_layer_3_output_dim = n_classes
+    q4_layer_2_output_dim = n_classes
 
     q4_input_layer = FullyConnectedLayer(input_dim=q4_layer_0_input_dim,
                                          output_dim=q4_layer_0_output_dim,
@@ -249,8 +238,8 @@ if __name__ == '__main__':
                                             activation=ReLU(),
                                             include_intercept=True)
 
-    q4_output_layer = FullyConnectedLayer(input_dim=q4_layer_3_input_dim,
-                                          output_dim=q4_layer_3_output_dim,
+    q4_output_layer = FullyConnectedLayer(input_dim=q4_layer_2_input_dim,
+                                          output_dim=q4_layer_2_output_dim,
                                           activation=ReLU(),
                                           include_intercept=True)
 
@@ -259,14 +248,14 @@ if __name__ == '__main__':
     q4_gd_solver = GradientDescent(learning_rate=FixedLR(0.1), max_iter=5000)
 
     q4_nn = NeuralNetwork(modules=q4_layers,
-                          loss_fn=CrossEntropyLoss(),  # todo?
+                          loss_fn=CrossEntropyLoss(),
                           solver=q4_gd_solver)
 
     # Fit network to data:
     q4_nn.fit(train_X, train_y)
 
     print(
-        f'NN [2x16x16x3] accuracy: {round(accuracy(q4_nn.predict(test_X), test_y) * 100, 3)}%')
+        f'NN [2x6x6x3] accuracy: {round(accuracy(q4_nn.predict(test_X), test_y) * 100, 3)}%')
 
     fig = plot_decision_boundary(q4_nn, lims, test_X, test_y,
                                  title="Q4 [2x6x6x3]")
